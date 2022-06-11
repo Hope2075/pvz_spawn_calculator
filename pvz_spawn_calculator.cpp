@@ -161,7 +161,7 @@ class d_page{
                         j++;
                     }
                 }
-                for(j=3;j<7;j++){
+                for(j=2;j<6;j++){
                     if(d1[j]&(1<<GIGA))d1[j]=d1[j+1]^(1<<GIGA);
                 }
                 if(d1[2]&(1<<ZOMBONI)){
