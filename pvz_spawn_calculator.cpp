@@ -28,36 +28,36 @@ enum zombie{
     LADDER   ,CATAPULT ,GARG     ,GIGA
 };
 const std::vector<std::string> scene_desc[]={
-    {"DAY"     ,"DE" ,"D" ,"����"  },
-    {"NIGHT"   ,"NE" ,"N" ,"ҹ��"  ,"��ҹ"},
-    {"POOL"    ,"PE" ,"P" ,"Ӿ��"  },
-    {"FOG"     ,"FE" ,"F" ,"Ũ��"  ,"����"},
-    {"ROOF"    ,"RE" ,"R" ,"�ݶ�"  },
-    {"MOON"    ,"ME" ,"M" ,"��ҹ"  },
-    {"MUSHROOM","MGE","MG","Ģ��԰"},
-    {"AQUARIOM","AQE","AQ","ˮ���"}
+    {"DAY"     ,"DE" ,"D" ,"白天"  },
+    {"NIGHT"   ,"NE" ,"N" ,"夜晚"  ,"黑夜"},
+    {"POOL"    ,"PE" ,"P" ,"泳池"  },
+    {"FOG"     ,"FE" ,"F" ,"浓雾"  ,"迷雾"},
+    {"ROOF"    ,"RE" ,"R" ,"屋顶"  },
+    {"MOON"    ,"ME" ,"M" ,"月夜"  },
+    {"MUSHROOM","MGE","MG","蘑菇园"},
+    {"AQUARIOM","AQE","AQ","水族馆"}
 };
 const std::vector<std::string> zombie_desc[20] = {
-    {"�ս�","REGULAR"  ,"��","��ͨ"},
-    {"·��","CONE"     ,"��"},
-    {"�Ÿ�","POLE"     ,"��"},
-    {"��Ͱ","BUCKET"   ,"Ͱ"},
-    {"����","NEWSPAPER","��"},
-    {"����","DOOR"     ,"��"},
-    {"���","FOOTBALL" ,"��","��ү"},
-    {"����","DANCE"    ,"��"},
-    {"Ǳˮ","SNORKEL"  ,"Ǳ"},
-    {"����","ZOMBONI"  ,"��"},
-    {"����","SOLPHIN"  ,"��"},
-    {"С��","JACK"     ,"��"},
-    {"����","BALLOON"  ,"��"},
-    {"��","DIGGER"   ,"��"},
-    {"����","POGO"     ,"��"},
-    {"�ļ�","BUNGEE"   ,"͵","С͵"},
-    {"����","LADDER"   ,"��","����"},
-    {"Ͷ��","CATAPULT" ,"��"},
-    {"����","GARG"     ,"��"},
-    {"����","GIGA"     ,"��"}
+    {"普僵","REGULAR"  ,"普","普通"},
+    {"路障","CONE"     ,"障"},
+    {"撑杆","POLE"     ,"杆"},
+    {"铁桶","BUCKET"   ,"桶"},
+    {"读报","NEWSPAPER","报"},
+    {"铁门","DOOR"     ,"门"},
+    {"橄榄","FOOTBALL" ,"橄","大爷"},
+    {"舞王","DANCE"    ,"舞"},
+    {"潜水","SNORKEL"  ,"潜"},
+    {"冰车","ZOMBONI"  ,"车"},
+    {"海豚","SOLPHIN"  ,"豚"},
+    {"小丑","JACK"     ,"丑"},
+    {"气球","BALLOON"  ,"气"},
+    {"矿工","DIGGER"   ,"矿"},
+    {"跳跳","POGO"     ,"跳"},
+    {"蹦极","BUNGEE"   ,"偷","小偷"},
+    {"扶梯","LADDER"   ,"梯","梯子"},
+    {"投篮","CATAPULT" ,"篮"},
+    {"白眼","GARG"     ,"白"},
+    {"红眼","GIGA"     ,"红"}
 };
 
 
@@ -424,7 +424,7 @@ std::vector<std::string> splits={
     "",
     " ",
     ",",
-    "��",
+    "，",
     ".",
     "\t"
 };
@@ -504,10 +504,10 @@ int get_single_zombie(std::string s){
 }
 int main(){
     while(1){
-        std::cout<<"1. �������Ӽ������"<<std::endl;
-        std::cout<<"2. ��ÿ�صĳ����������"<<std::endl;
-        std::cout<<"3. ���Ƶ����ֵĴ������������"<<std::endl;
-        std::cout<<"ѡ��ģʽ���򰴻س��˳�: ";
+        std::cout<<"1. 根据种子计算出怪"<<std::endl;
+        std::cout<<"2. 按每关的出怪求出种子"<<std::endl;
+        std::cout<<"3. 限制单个怪的次数，求出种子"<<std::endl;
+        std::cout<<"选择模式，或按回车退出: ";
         std::string mode;
         std::getline(std::cin,mode);
         if(mode=="1"){
@@ -515,21 +515,21 @@ int main(){
             int mode,uid,scene,begin,end;
             std::string input;
 
-            std::cout<<"����(ʮ������): ";
+            std::cout<<"种子(十六进制): ";
             std::getline(std::cin,input);
             try{
                 long long s0=std::stoll(input,0,16);
                 if(s0<0 || s0>=(1ll<<32))throw std::out_of_range("");
                 seed=s0;
             }catch(std::invalid_argument e){
-                std::cout<<"���Ӹ�ʽ����"<<std::endl;
+                std::cout<<"种子格式错误！"<<std::endl;
                 continue;
             }catch(std::out_of_range e){
-                std::cout<<"������ֵ�Ƿ���"<<std::endl;
+                std::cout<<"种子数值非法！"<<std::endl;
                 continue;
             }
 
-            std::cout<<"����(Ĭ��ΪӾ��): ";
+            std::cout<<"场景(默认为泳池): ";
             std::getline(std::cin,input);
             if(input==""){
                 scene=POOL;
@@ -537,13 +537,13 @@ int main(){
                 try{
                     scene=get_scene(input);
                 }catch(std::invalid_argument e){
-                    std::cout<<"������ʽ����"<<std::endl;
+                    std::cout<<"场景格式错误！"<<std::endl;
                     continue;
                 }
             }
             
 
-            std::cout<<"�û����(Ĭ��Ϊ1): ";
+            std::cout<<"用户编号(默认为1): ";
             std::getline(std::cin,input);
             if(input==""){
                 uid=1;
@@ -551,15 +551,15 @@ int main(){
                 try{
                     uid=std::stoul(input,0,10);
                 }catch(std::invalid_argument e){
-                    std::cout<<"�û���Ÿ�ʽ����"<<std::endl;
+                    std::cout<<"用户编号格式错误！"<<std::endl;
                     continue;
                 }catch(std::out_of_range e){
-                    std::cout<<"�û������ֵ�Ƿ���"<<std::endl;
+                    std::cout<<"用户编号数值非法！"<<std::endl;
                     continue;
                 }
             }
 
-            std::cout<<"�浵���(Ĭ��Ϊ13): ";
+            std::cout<<"存档编号(默认为13): ";
             std::getline(std::cin,input);
             if(input==""){
                 mode=13;
@@ -567,29 +567,29 @@ int main(){
                 try{
                     mode=std::stoul(input,0,10);
                 }catch(std::invalid_argument e){
-                    std::cout<<"�浵��Ÿ�ʽ����"<<std::endl;
+                    std::cout<<"存档编号格式错误！"<<std::endl;
                     continue;
                 }catch(std::out_of_range e){
-                    std::cout<<"�浵�����ֵ�Ƿ���"<<std::endl;
+                    std::cout<<"存档编号数值非法！"<<std::endl;
                     continue;
                 }
             }
 
-            std::cout<<"��ʼ������(����): ";
+            std::cout<<"起始旗帜数(奇数): ";
             std::getline(std::cin,input);
             try{
                 begin=std::stol(input,0,10);
                 if(begin<0||begin%2==0)throw std::out_of_range("");
                 begin/=2;
             }catch(std::invalid_argument e){
-                std::cout<<"��ʼ��������ʽ����"<<std::endl;
+                std::cout<<"起始旗帜数格式错误！"<<std::endl;
                 continue;
             }catch(std::out_of_range e){
-                std::cout<<"��ʼ��������ֵ�Ƿ���"<<std::endl;
+                std::cout<<"起始旗帜数数值非法！"<<std::endl;
                 continue;
             }
 
-            std::cout<<"��ֹ������(ż��)��ֱ������س�����㵱ǰ��: ";
+            std::cout<<"终止旗帜数(偶数)，直接输入回车则计算当前关: ";
             std::getline(std::cin,input);
             try{
                 if(input==""){
@@ -601,10 +601,10 @@ int main(){
                     if(end<=begin)throw std::out_of_range("");
                 }
             }catch(std::invalid_argument e){
-                std::cout<<"��ֹ��������ʽ����"<<std::endl;
+                std::cout<<"终止旗帜数格式错误！"<<std::endl;
                 continue;
             }catch(std::out_of_range e){
-                std::cout<<"��ֹ��������ֵ�Ƿ���"<<std::endl;
+                std::cout<<"终止旗帜数数值非法！"<<std::endl;
                 continue;
             }
             calc_single(seed,uid,mode,scene,begin,end);
@@ -616,7 +616,7 @@ int main(){
             std::string input;
             worker_type wk;
 
-            std::cout<<"��ʼ����(ʮ������)(Ĭ��Ϊ0): ";
+            std::cout<<"起始种子(十六进制)(默认为0): ";
             std::getline(std::cin,input);
             if(input==""){
                 seed=0;
@@ -626,15 +626,15 @@ int main(){
                     if(s0<0 || s0>=(1ll<<32))throw std::out_of_range("");
                     seed=s0;
                 }catch(std::invalid_argument e){
-                    std::cout<<"���Ӹ�ʽ����"<<std::endl;
+                    std::cout<<"种子格式错误！"<<std::endl;
                     continue;
                 }catch(std::out_of_range e){
-                    std::cout<<"������ֵ�Ƿ���"<<std::endl;
+                    std::cout<<"种子数值非法！"<<std::endl;
                     continue;
                 }
             }
 
-            std::cout<<"���Χ(Ĭ�ϼ�����������): ";
+            std::cout<<"最大范围(默认计算所有种子): ";
             std::getline(std::cin,input);
             try{
                 if(input==""){
@@ -644,14 +644,14 @@ int main(){
                     if(maxn<=0||maxn>(1ll<<31))throw std::out_of_range("");
                 }
             }catch(std::invalid_argument e){
-                std::cout<<"���Χ��ʽ����"<<std::endl;
+                std::cout<<"最大范围格式错误！"<<std::endl;
                 continue;
             }catch(std::out_of_range e){
-                std::cout<<"���Χ��ֵ�Ƿ���"<<std::endl;
+                std::cout<<"最大范围数值非法！"<<std::endl;
                 continue;
             }
 
-            std::cout<<"����(Ĭ��ΪӾ��): ";
+            std::cout<<"场景(默认为泳池): ";
             std::getline(std::cin,input);
             if(input==""){
                 scene=POOL;
@@ -659,13 +659,13 @@ int main(){
                 try{
                     scene=get_scene(input);
                 }catch(std::invalid_argument e){
-                    std::cout<<"������ʽ����"<<std::endl;
+                    std::cout<<"场景格式错误！"<<std::endl;
                     continue;
                 }
             }
             
 
-            std::cout<<"�û����(Ĭ��Ϊ1): ";
+            std::cout<<"用户编号(默认为1): ";
             std::getline(std::cin,input);
             if(input==""){
                 uid=1;
@@ -673,15 +673,15 @@ int main(){
                 try{
                     uid=std::stoul(input,0,10);
                 }catch(std::invalid_argument e){
-                    std::cout<<"�û���Ÿ�ʽ����"<<std::endl;
+                    std::cout<<"用户编号格式错误！"<<std::endl;
                     continue;
                 }catch(std::out_of_range e){
-                    std::cout<<"�û������ֵ�Ƿ���"<<std::endl;
+                    std::cout<<"用户编号数值非法！"<<std::endl;
                     continue;
                 }
             }
 
-            std::cout<<"�浵���(Ĭ��Ϊ13): ";
+            std::cout<<"存档编号(默认为13): ";
             std::getline(std::cin,input);
             if(input==""){
                 mode=13;
@@ -689,29 +689,29 @@ int main(){
                 try{
                     mode=std::stoul(input,0,10);
                 }catch(std::invalid_argument e){
-                    std::cout<<"�浵��Ÿ�ʽ����"<<std::endl;
+                    std::cout<<"存档编号格式错误！"<<std::endl;
                     continue;
                 }catch(std::out_of_range e){
-                    std::cout<<"�浵�����ֵ�Ƿ���"<<std::endl;
+                    std::cout<<"存档编号数值非法！"<<std::endl;
                     continue;
                 }
             }
 
-            std::cout<<"��ʼ������(����): ";
+            std::cout<<"起始旗帜数(奇数): ";
             std::getline(std::cin,input);
             try{
                 begin=std::stol(input,0,10);
                 if(begin<0||begin%2==0)throw std::out_of_range("");
                 begin/=2;
             }catch(std::invalid_argument e){
-                std::cout<<"��ʼ��������ʽ����"<<std::endl;
+                std::cout<<"起始旗帜数格式错误！"<<std::endl;
                 continue;
             }catch(std::out_of_range e){
-                std::cout<<"��ʼ��������ֵ�Ƿ���"<<std::endl;
+                std::cout<<"起始旗帜数数值非法！"<<std::endl;
                 continue;
             }
 
-            std::cout<<"��ֹ������(ż��)��ֱ������س�����㵱ǰ��: ";
+            std::cout<<"终止旗帜数(偶数)，直接输入回车则计算当前关: ";
             std::getline(std::cin,input);
             try{
                 if(input==""){
@@ -723,10 +723,10 @@ int main(){
                     if(end<=begin)throw std::out_of_range("");
                 }
             }catch(std::invalid_argument e){
-                std::cout<<"��ֹ��������ʽ����"<<std::endl;
+                std::cout<<"终止旗帜数格式错误！"<<std::endl;
                 continue;
             }catch(std::out_of_range e){
-                std::cout<<"��ֹ��������ֵ�Ƿ���"<<std::endl;
+                std::cout<<"终止旗帜数数值非法！"<<std::endl;
                 continue;
             }
             wk.begin=begin;
@@ -735,8 +735,8 @@ int main(){
                 int include=1;
                 int exclude=0;
                 for(int i=begin;i<end;i++){
-                    std::cout<<std::setw(4)<<i*2+1<<" -"<<std::setw(4)<<i*2+2<<" flag ����Ϣ"<<std::endl;
-                    std::cout<<"�������½�ʬ������\"P\"��֮��ʹ����һ�ص����ã�";
+                    std::cout<<std::setw(4)<<i*2+1<<" -"<<std::setw(4)<<i*2+2<<" flag 的信息"<<std::endl;
+                    std::cout<<"包含以下僵尸，输入\"P\"则之后使用上一关的设置：";
                     std::getline(std::cin,input);
                     if(input=="P"){
                         for(int j=i;j<end;j++){
@@ -746,7 +746,7 @@ int main(){
                         break;
                     }
                     include=get_zombies(input);
-                    std::cout<<"���������½�ʬ������س��������ƣ�����\"A\"���ų�������ʬ��";
+                    std::cout<<"不包含以下僵尸，输入回车则不作限制，输入\"A\"则排除其它僵尸：";
                     std::getline(std::cin,input);
                     if(input=="A"){
                         exclude=~include;
@@ -758,18 +758,18 @@ int main(){
                     wk.exclude[i]=exclude;
                 }
             }catch(std::invalid_argument e){
-                std::cout<<"�����ʽ����"<<std::endl;
+                std::cout<<"输入格式错误！"<<std::endl;
                 continue;
             }
 
             wk.set(seed,uid,mode,scene,maxn,0);
             wk.works(8);
-            std::cout<<"��ʱ:"<<std::setw(10)<<std::setprecision(3)<<wk.times/1000.0<<"��"<<std::endl;
+            std::cout<<"用时:"<<std::setw(10)<<std::setprecision(3)<<wk.times/1000.0<<"秒"<<std::endl;
 
             if(wk.found){
-                std::cout<<"�ɹ��ҵ����ӣ�"<<std::setw(8)<<std::hex<<wk.result<<std::dec<<std::endl;
+                std::cout<<"成功找到种子："<<std::setw(8)<<std::hex<<wk.result<<std::dec<<std::endl;
             }else{
-                std::cout<<"δ���ҵ�����"<<std::endl;
+                std::cout<<"未能找到种子"<<std::endl;
             }
         }else if(mode=="3"){
             uint32_t seed;
@@ -779,7 +779,7 @@ int main(){
             worker_limit wk;
             int target,limit;
 
-            std::cout<<"��ʼ����(ʮ������)(Ĭ��Ϊ0): ";
+            std::cout<<"起始种子(十六进制)(默认为0): ";
             std::getline(std::cin,input);
             if(input==""){
                 seed=0;
@@ -789,15 +789,15 @@ int main(){
                     if(s0<0 || s0>=(1ll<<32))throw std::out_of_range("");
                     seed=s0;
                 }catch(std::invalid_argument e){
-                    std::cout<<"���Ӹ�ʽ����"<<std::endl;
+                    std::cout<<"种子格式错误！"<<std::endl;
                     continue;
                 }catch(std::out_of_range e){
-                    std::cout<<"������ֵ�Ƿ���"<<std::endl;
+                    std::cout<<"种子数值非法！"<<std::endl;
                     continue;
                 }
             }
 
-            std::cout<<"���Χ(Ĭ�ϼ�����������): ";
+            std::cout<<"最大范围(默认计算所有种子): ";
             std::getline(std::cin,input);
             try{
                 if(input==""){
@@ -807,14 +807,14 @@ int main(){
                     if(maxn<=0||maxn>(1ll<<31))throw std::out_of_range("");
                 }
             }catch(std::invalid_argument e){
-                std::cout<<"���Χ��ʽ����"<<std::endl;
+                std::cout<<"最大范围格式错误！"<<std::endl;
                 continue;
             }catch(std::out_of_range e){
-                std::cout<<"���Χ��ֵ�Ƿ���"<<std::endl;
+                std::cout<<"最大范围数值非法！"<<std::endl;
                 continue;
             }
 
-            std::cout<<"����(Ĭ��ΪӾ��): ";
+            std::cout<<"场景(默认为泳池): ";
             std::getline(std::cin,input);
             if(input==""){
                 scene=POOL;
@@ -822,13 +822,13 @@ int main(){
                 try{
                     scene=get_scene(input);
                 }catch(std::invalid_argument e){
-                    std::cout<<"������ʽ����"<<std::endl;
+                    std::cout<<"场景格式错误！"<<std::endl;
                     continue;
                 }
             }
             
 
-            std::cout<<"�û����(Ĭ��Ϊ1): ";
+            std::cout<<"用户编号(默认为1): ";
             std::getline(std::cin,input);
             if(input==""){
                 uid=1;
@@ -836,15 +836,15 @@ int main(){
                 try{
                     uid=std::stoul(input,0,10);
                 }catch(std::invalid_argument e){
-                    std::cout<<"�û���Ÿ�ʽ����"<<std::endl;
+                    std::cout<<"用户编号格式错误！"<<std::endl;
                     continue;
                 }catch(std::out_of_range e){
-                    std::cout<<"�û������ֵ�Ƿ���"<<std::endl;
+                    std::cout<<"用户编号数值非法！"<<std::endl;
                     continue;
                 }
             }
 
-            std::cout<<"�浵���(Ĭ��Ϊ13): ";
+            std::cout<<"存档编号(默认为13): ";
             std::getline(std::cin,input);
             if(input==""){
                 mode=13;
@@ -852,29 +852,29 @@ int main(){
                 try{
                     mode=std::stoul(input,0,10);
                 }catch(std::invalid_argument e){
-                    std::cout<<"�浵��Ÿ�ʽ����"<<std::endl;
+                    std::cout<<"存档编号格式错误！"<<std::endl;
                     continue;
                 }catch(std::out_of_range e){
-                    std::cout<<"�浵�����ֵ�Ƿ���"<<std::endl;
+                    std::cout<<"存档编号数值非法！"<<std::endl;
                     continue;
                 }
             }
 
-            std::cout<<"��ʼ������(����): ";
+            std::cout<<"起始旗帜数(奇数): ";
             std::getline(std::cin,input);
             try{
                 begin=std::stol(input,0,10);
                 if(begin<0||begin%2==0)throw std::out_of_range("");
                 begin/=2;
             }catch(std::invalid_argument e){
-                std::cout<<"��ʼ��������ʽ����"<<std::endl;
+                std::cout<<"起始旗帜数格式错误！"<<std::endl;
                 continue;
             }catch(std::out_of_range e){
-                std::cout<<"��ʼ��������ֵ�Ƿ���"<<std::endl;
+                std::cout<<"起始旗帜数数值非法！"<<std::endl;
                 continue;
             }
 
-            std::cout<<"��ֹ������(ż��)��ֱ������س�����㵱ǰ��: ";
+            std::cout<<"终止旗帜数(偶数)，直接输入回车则计算当前关: ";
             std::getline(std::cin,input);
             try{
                 if(input==""){
@@ -886,25 +886,25 @@ int main(){
                     if(end<=begin)throw std::out_of_range("");
                 }
             }catch(std::invalid_argument e){
-                std::cout<<"��ֹ��������ʽ����"<<std::endl;
+                std::cout<<"终止旗帜数格式错误！"<<std::endl;
                 continue;
             }catch(std::out_of_range e){
-                std::cout<<"��ֹ��������ֵ�Ƿ���"<<std::endl;
+                std::cout<<"终止旗帜数数值非法！"<<std::endl;
                 continue;
             }
             wk.begin=begin;
             wk.end=end;
 
-            std::cout<<"Ŀ�꽩ʬ: ";
+            std::cout<<"目标僵尸: ";
             std::getline(std::cin,input);
             try{
                 target=get_single_zombie(input);
             }catch(std::invalid_argument e){
-                std::cout<<"Ŀ�꽩ʬ����ʽ����"<<std::endl;
+                std::cout<<"目标僵尸数格式错误！"<<std::endl;
                 continue;
             }
 
-            std::cout<<"������(Ĭ��ֵΪ0): ";
+            std::cout<<"最大次数(默认值为0): ";
             std::getline(std::cin,input);
             try{
                 if(input==""){
@@ -914,10 +914,10 @@ int main(){
                     if(limit<0||begin+limit>end)throw std::out_of_range("");
                 }
             }catch(std::invalid_argument e){
-                std::cout<<"��������ʽ����"<<std::endl;
+                std::cout<<"最大次数格式错误！"<<std::endl;
                 continue;
             }catch(std::out_of_range e){
-                std::cout<<"��������ֵ�Ƿ���"<<std::endl;
+                std::cout<<"最大次数数值非法！"<<std::endl;
                 continue;
             }
             wk.times=limit;
@@ -925,16 +925,16 @@ int main(){
             //std::cout<<"DEBUG:"<<limit<<" "<<target<<std::endl;
             wk.set(seed,uid,mode,scene,maxn,0);
             wk.works(8);
-            std::cout<<"��ʱ:"<<std::setw(10)<<std::setiosflags(std::ios::fixed)<<std::setprecision(3)<<wk.times/1000.0<<"��"<<std::endl;
+            std::cout<<"用时:"<<std::setw(10)<<std::setiosflags(std::ios::fixed)<<std::setprecision(3)<<wk.times/1000.0<<"秒"<<std::endl;
             if(wk.found){
-                std::cout<<"�ɹ��ҵ����ӣ�"<<std::setw(8)<<std::hex<<wk.result<<std::dec<<std::endl;
+                std::cout<<"成功找到种子："<<std::setw(8)<<std::hex<<wk.result<<std::dec<<std::endl;
             }else{
-                std::cout<<"δ���ҵ�����"<<std::endl;
+                std::cout<<"未能找到种子"<<std::endl;
             }
         }else if(mode==""){
             break;
         }else{
-            std::cout<<"ģʽ��Ŵ���"<<std::endl;
+            std::cout<<"模式编号错误"<<std::endl;
         }
     }
 }
