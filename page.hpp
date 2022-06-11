@@ -12,7 +12,9 @@ class page  {
     friend class d_page;
     int id;
     int scene;
-    int data[BLOCK][8];
+    int data[BLOCK * 8];
+    static constexpr ::std::size_t data_y_width = BLOCK;
+    static constexpr ::std::size_t data_x_width = 8;
     static constexpr int allow_base[8] =
         {0x0f0ffaff, 0x0f0ff8ff, 0x0f0fffff, 0x0f0fffff,
          0x0f0fda7f, 0x0f0fda7f, 0x0f0ffaff, 0x0f0ffaff};
@@ -78,15 +80,17 @@ public:
                 if (d1[2] & (1 << GARG))
                     d1[2] = d1[3] ^ (1 << GARG);
             for (j = 0; j < 8; ++j)
-                data[i][j] = d1[j + 2];
+                data[i*data_x_width + j] = d1[j + 2];
         }
     }
     int get(uint32_t pos, int level)
     {
-        return data[pos][level];
+        return data[pos*data_x_width + level];
     }
 };
 
+constexpr ::std::size_t page::data_x_width;
+constexpr ::std::size_t page::data_y_width;
 constexpr int page::allow_base[8];
 constexpr int page::conv_id[33];
 
