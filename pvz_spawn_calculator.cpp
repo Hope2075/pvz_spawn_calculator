@@ -199,7 +199,7 @@ class d_page{
         level--;
         if(level>=8)level=7;
         uint32_t t=pos>>LENGTH;
-        if(t==cur+2){
+        if(t==uint32_t(cur+2)){
             if(cur&1){
                 p1.init(scene,cur+2);
             }else{
@@ -207,7 +207,7 @@ class d_page{
             }
             cur++;
         }
-        if(t==cur-1){
+        if(t==uint32_t(cur-1)){
             if(cur&1){
                 p1.init(scene,cur-1);
             }else{
@@ -215,7 +215,7 @@ class d_page{
             }
             cur--;
         }
-        if(t!=cur && t!=cur+1){
+        if(t!=uint32_t(cur) && t!=uint32_t(cur+1)){
             if(t&1){
                 p1.init(scene,t);
                 p0.init(scene,t+1);
@@ -521,10 +521,10 @@ int main(){
                 long long s0=std::stoll(input,0,16);
                 if(s0<0 || s0>=(1ll<<32))throw std::out_of_range("");
                 seed=s0;
-            }catch(std::invalid_argument e){
+            }catch(std::invalid_argument const& e){
                 std::cout<<"种子格式错误！"<<std::endl;
                 continue;
-            }catch(std::out_of_range e){
+            }catch(std::out_of_range const& e){
                 std::cout<<"种子数值非法！"<<std::endl;
                 continue;
             }
@@ -536,7 +536,7 @@ int main(){
             }else{
                 try{
                     scene=get_scene(input);
-                }catch(std::invalid_argument e){
+                }catch(std::invalid_argument const& e){
                     std::cout<<"场景格式错误！"<<std::endl;
                     continue;
                 }
@@ -550,10 +550,10 @@ int main(){
             }else{
                 try{
                     uid=std::stoul(input,0,10);
-                }catch(std::invalid_argument e){
+                }catch(std::invalid_argument const& e){
                     std::cout<<"用户编号格式错误！"<<std::endl;
                     continue;
-                }catch(std::out_of_range e){
+                }catch(std::out_of_range const& e){
                     std::cout<<"用户编号数值非法！"<<std::endl;
                     continue;
                 }
@@ -566,10 +566,10 @@ int main(){
             }else{
                 try{
                     mode=std::stoul(input,0,10);
-                }catch(std::invalid_argument e){
+                }catch(std::invalid_argument const& e){
                     std::cout<<"存档编号格式错误！"<<std::endl;
                     continue;
-                }catch(std::out_of_range e){
+                }catch(std::out_of_range const& e){
                     std::cout<<"存档编号数值非法！"<<std::endl;
                     continue;
                 }
@@ -581,10 +581,10 @@ int main(){
                 begin=std::stol(input,0,10);
                 if(begin<0||begin%2==0)throw std::out_of_range("");
                 begin/=2;
-            }catch(std::invalid_argument e){
+            }catch(std::invalid_argument const& e){
                 std::cout<<"起始旗帜数格式错误！"<<std::endl;
                 continue;
-            }catch(std::out_of_range e){
+            }catch(std::out_of_range const& e){
                 std::cout<<"起始旗帜数数值非法！"<<std::endl;
                 continue;
             }
@@ -600,10 +600,10 @@ int main(){
                     end/=2;
                     if(end<=begin)throw std::out_of_range("");
                 }
-            }catch(std::invalid_argument e){
+            }catch(std::invalid_argument const& e){
                 std::cout<<"终止旗帜数格式错误！"<<std::endl;
                 continue;
-            }catch(std::out_of_range e){
+            }catch(std::out_of_range const& e){
                 std::cout<<"终止旗帜数数值非法！"<<std::endl;
                 continue;
             }
@@ -625,10 +625,10 @@ int main(){
                     long long s0=std::stoll(input,0,16);
                     if(s0<0 || s0>=(1ll<<32))throw std::out_of_range("");
                     seed=s0;
-                }catch(std::invalid_argument e){
+                }catch(std::invalid_argument const& e){
                     std::cout<<"种子格式错误！"<<std::endl;
                     continue;
-                }catch(std::out_of_range e){
+                }catch(std::out_of_range const& e){
                     std::cout<<"种子数值非法！"<<std::endl;
                     continue;
                 }
@@ -643,10 +643,10 @@ int main(){
                     maxn=std::stol(input,0,10);
                     if(maxn<=0||maxn>(1ll<<31))throw std::out_of_range("");
                 }
-            }catch(std::invalid_argument e){
+            }catch(std::invalid_argument const& e){
                 std::cout<<"最大范围格式错误！"<<std::endl;
                 continue;
-            }catch(std::out_of_range e){
+            }catch(std::out_of_range const& e){
                 std::cout<<"最大范围数值非法！"<<std::endl;
                 continue;
             }
@@ -658,7 +658,7 @@ int main(){
             }else{
                 try{
                     scene=get_scene(input);
-                }catch(std::invalid_argument e){
+                }catch(std::invalid_argument const& e){
                     std::cout<<"场景格式错误！"<<std::endl;
                     continue;
                 }
@@ -672,10 +672,10 @@ int main(){
             }else{
                 try{
                     uid=std::stoul(input,0,10);
-                }catch(std::invalid_argument e){
+                }catch(std::invalid_argument const& e){
                     std::cout<<"用户编号格式错误！"<<std::endl;
                     continue;
-                }catch(std::out_of_range e){
+                }catch(std::out_of_range const& e){
                     std::cout<<"用户编号数值非法！"<<std::endl;
                     continue;
                 }
@@ -688,10 +688,10 @@ int main(){
             }else{
                 try{
                     mode=std::stoul(input,0,10);
-                }catch(std::invalid_argument e){
+                }catch(std::invalid_argument const& e){
                     std::cout<<"存档编号格式错误！"<<std::endl;
                     continue;
-                }catch(std::out_of_range e){
+                }catch(std::out_of_range const& e){
                     std::cout<<"存档编号数值非法！"<<std::endl;
                     continue;
                 }
@@ -703,10 +703,10 @@ int main(){
                 begin=std::stol(input,0,10);
                 if(begin<0||begin%2==0)throw std::out_of_range("");
                 begin/=2;
-            }catch(std::invalid_argument e){
+            }catch(std::invalid_argument const& e){
                 std::cout<<"起始旗帜数格式错误！"<<std::endl;
                 continue;
-            }catch(std::out_of_range e){
+            }catch(std::out_of_range const& e){
                 std::cout<<"起始旗帜数数值非法！"<<std::endl;
                 continue;
             }
@@ -722,10 +722,10 @@ int main(){
                     end/=2;
                     if(end<=begin)throw std::out_of_range("");
                 }
-            }catch(std::invalid_argument e){
+            }catch(std::invalid_argument const& e){
                 std::cout<<"终止旗帜数格式错误！"<<std::endl;
                 continue;
-            }catch(std::out_of_range e){
+            }catch(std::out_of_range const& e){
                 std::cout<<"终止旗帜数数值非法！"<<std::endl;
                 continue;
             }
@@ -757,7 +757,7 @@ int main(){
                     wk.include[i]=include;
                     wk.exclude[i]=exclude;
                 }
-            }catch(std::invalid_argument e){
+            }catch(std::invalid_argument const& e){
                 std::cout<<"输入格式错误！"<<std::endl;
                 continue;
             }
@@ -788,10 +788,10 @@ int main(){
                     long long s0=std::stoll(input,0,16);
                     if(s0<0 || s0>=(1ll<<32))throw std::out_of_range("");
                     seed=s0;
-                }catch(std::invalid_argument e){
+                }catch(std::invalid_argument const& e){
                     std::cout<<"种子格式错误！"<<std::endl;
                     continue;
-                }catch(std::out_of_range e){
+                }catch(std::out_of_range const& e){
                     std::cout<<"种子数值非法！"<<std::endl;
                     continue;
                 }
@@ -806,10 +806,10 @@ int main(){
                     maxn=std::stol(input,0,10);
                     if(maxn<=0||maxn>(1ll<<31))throw std::out_of_range("");
                 }
-            }catch(std::invalid_argument e){
+            }catch(std::invalid_argument const& e){
                 std::cout<<"最大范围格式错误！"<<std::endl;
                 continue;
-            }catch(std::out_of_range e){
+            }catch(std::out_of_range const& e){
                 std::cout<<"最大范围数值非法！"<<std::endl;
                 continue;
             }
@@ -821,7 +821,7 @@ int main(){
             }else{
                 try{
                     scene=get_scene(input);
-                }catch(std::invalid_argument e){
+                }catch(std::invalid_argument const& e){
                     std::cout<<"场景格式错误！"<<std::endl;
                     continue;
                 }
@@ -835,10 +835,10 @@ int main(){
             }else{
                 try{
                     uid=std::stoul(input,0,10);
-                }catch(std::invalid_argument e){
+                }catch(std::invalid_argument const& e){
                     std::cout<<"用户编号格式错误！"<<std::endl;
                     continue;
-                }catch(std::out_of_range e){
+                }catch(std::out_of_range const& e){
                     std::cout<<"用户编号数值非法！"<<std::endl;
                     continue;
                 }
@@ -851,10 +851,10 @@ int main(){
             }else{
                 try{
                     mode=std::stoul(input,0,10);
-                }catch(std::invalid_argument e){
+                }catch(std::invalid_argument const& e){
                     std::cout<<"存档编号格式错误！"<<std::endl;
                     continue;
-                }catch(std::out_of_range e){
+                }catch(std::out_of_range const& e){
                     std::cout<<"存档编号数值非法！"<<std::endl;
                     continue;
                 }
@@ -866,10 +866,10 @@ int main(){
                 begin=std::stol(input,0,10);
                 if(begin<0||begin%2==0)throw std::out_of_range("");
                 begin/=2;
-            }catch(std::invalid_argument e){
+            }catch(std::invalid_argument const& e){
                 std::cout<<"起始旗帜数格式错误！"<<std::endl;
                 continue;
-            }catch(std::out_of_range e){
+            }catch(std::out_of_range const& e){
                 std::cout<<"起始旗帜数数值非法！"<<std::endl;
                 continue;
             }
@@ -885,10 +885,10 @@ int main(){
                     end/=2;
                     if(end<=begin)throw std::out_of_range("");
                 }
-            }catch(std::invalid_argument e){
+            }catch(std::invalid_argument const& e){
                 std::cout<<"终止旗帜数格式错误！"<<std::endl;
                 continue;
-            }catch(std::out_of_range e){
+            }catch(std::out_of_range const& e){
                 std::cout<<"终止旗帜数数值非法！"<<std::endl;
                 continue;
             }
@@ -899,7 +899,7 @@ int main(){
             std::getline(std::cin,input);
             try{
                 target=get_single_zombie(input);
-            }catch(std::invalid_argument e){
+            }catch(std::invalid_argument const& e){
                 std::cout<<"目标僵尸数格式错误！"<<std::endl;
                 continue;
             }
@@ -913,10 +913,10 @@ int main(){
                     limit=std::stol(input,0,10);
                     if(limit<0||begin+limit>end)throw std::out_of_range("");
                 }
-            }catch(std::invalid_argument e){
+            }catch(std::invalid_argument const& e){
                 std::cout<<"最大次数格式错误！"<<std::endl;
                 continue;
-            }catch(std::out_of_range e){
+            }catch(std::out_of_range const& e){
                 std::cout<<"最大次数数值非法！"<<std::endl;
                 continue;
             }
