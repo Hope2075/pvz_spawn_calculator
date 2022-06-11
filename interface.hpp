@@ -43,10 +43,12 @@ inline uint32_t getseed()
     using std::cout;
     std::string input{};
     ::std::uint32_t seed{};
-    cout << "种子(十六进制): ";
+    cout << "种子(十六进制)(默认为0): ";
     std::getline(cin, input);
     try
     {
+        if(input == "")
+            return 0x0;
         long long s0 = std::stoll(input, 0, 16);
         if (s0 < 0 || s0 >= (1ll << 32))
             throw std::out_of_range("");
