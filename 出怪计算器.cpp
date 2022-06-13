@@ -14,6 +14,7 @@
 #define LENGTH 10
 #define BLOCK (1<<LENGTH)
 #define MASK (BLOCK-1)
+int TRDS=8;
 const long long inv=2083697005;
 //(int)(inv*101)=1
 enum scene{
@@ -27,46 +28,6 @@ enum zombie{
     BALLOON  ,DIGGER   ,POGO     ,BUNGEE   ,
     LADDER   ,CATAPULT ,GARG     ,GIGA
 };
-const std::vector<std::string> scene_desc[]={
-    {"DAY"     ,"DE" ,"D" ,"°×Ìì"  },
-    {"NIGHT"   ,"NE" ,"N" ,"Ò¹Íí"  ,"ºÚÒ¹"},
-    {"POOL"    ,"PE" ,"P" ,"Ó¾³Ø"  },
-    {"FOG"     ,"FE" ,"F" ,"Å¨Îí"  ,"ÃÔÎí"},
-    {"ROOF"    ,"RE" ,"R" ,"Îİ¶¥"  },
-    {"MOON"    ,"ME" ,"M" ,"ÔÂÒ¹"  },
-    {"MUSHROOM","MGE","MG","Ä¢¹½Ô°"},
-    {"AQUARIOM","AQE","AQ","Ë®×å¹İ"}
-};
-const std::vector<std::string> zombie_desc[20] = {
-    {"ÆÕ½©","REGULAR"  ,"ÆÕ","ÆÕÍ¨"},
-    {"Â·ÕÏ","CONE"     ,"ÕÏ"},
-    {"³Å¸Ë","POLE"     ,"¸Ë"},
-    {"ÌúÍ°","BUCKET"   ,"Í°"},
-    {"¶Á±¨","NEWSPAPER","±¨"},
-    {"ÌúÃÅ","DOOR"     ,"ÃÅ"},
-    {"éÏé­","FOOTBALL" ,"éÏ","´óÒ¯"},
-    {"ÎèÍõ","DANCE"    ,"Îè"},
-    {"Ç±Ë®","SNORKEL"  ,"Ç±"},
-    {"±ù³µ","ZOMBONI"  ,"³µ"},
-    {"º£ëà","SOLPHIN"  ,"ëà"},
-    {"Ğ¡³ó","JACK"     ,"³ó"},
-    {"ÆøÇò","BALLOON"  ,"Æø"},
-    {"¿ó¹¤","DIGGER"   ,"¿ó"},
-    {"ÌøÌø","POGO"     ,"Ìø"},
-    {"±Ä¼«","BUNGEE"   ,"Íµ","Ğ¡Íµ"},
-    {"·öÌİ","LADDER"   ,"Ìİ","Ìİ×Ó"},
-    {"Í¶Àº","CATAPULT" ,"Àº"},
-    {"°×ÑÛ","GARG"     ,"°×"},
-    {"ºìÑÛ","GIGA"     ,"ºì"}
-};
-
-
-
-
-//FILE* f;
-
-//long long cnt;
-//std::mutex mc;
 class d_page{
     private:
     class page{
@@ -91,7 +52,7 @@ class d_page{
             int idx;
             void rng_twist(){
                 int i;
-                for (i = 0; i < 0x26F; ++i){
+                for (i = 0; i < 0x270; ++i){
                     uint32_t tmp = (buf[i] & 0x80000000) | (buf[i + 1] & 0x7FFFFFFF);
                     buf[i] = (tmp >> 1) ^ buf[(i + 0x18D) % 0x270];
                     if (tmp & 1){
@@ -101,8 +62,15 @@ class d_page{
             }
             uint32_t rng_gen(){
                 uint32_t tmp;
-                if (idx == 0)
-                    rng_twist();
+
+                tmp = (buf[idx] & 0x80000000) | (buf[idx + 1] & 0x7FFFFFFF);
+                buf[idx] = (tmp >> 1) ^ buf[(idx + 0x18D) % 0x270];
+                if (tmp & 1){
+                    buf[idx] ^= 0x9908B0DF;
+                }
+
+                buf[idx+ 0x18D+1] =(buf[idx+ 0x18D] ^ (buf[idx+ 0x18D] >> 30)) * 0x6C078965 + idx+ 0x18D+1;
+
                 tmp = buf[idx];
                 tmp ^= (tmp >> 11);
                 tmp ^= ((tmp & 0xFF3A58AD) << 7);
@@ -115,7 +83,7 @@ class d_page{
             void rng_init(uint32_t seed){
                 int i;
                 buf[0] = seed;
-                for (i = 1; i < 0x270; ++i){
+                for (i = 1; i < 0x18e; ++i){
                     buf[i] =(buf[i - 1] ^ (buf[i - 1] >> 30)) * 0x6C078965 + i;
                 }
                 idx = 0;
@@ -125,9 +93,10 @@ class d_page{
                 return (rng_gen() & 0x7FFFFFFF) % max;
             }
         };
+        
+        rng g;
         public:
         void init(int sc,int idx){
-            rng g;
             int d1[10];
             int allow;
             scene=sc;
@@ -161,7 +130,7 @@ class d_page{
                         j++;
                     }
                 }
-                for(j=3;j<7;j++){
+                for(j=2;j<6;j++){
                     if(d1[j]&(1<<GIGA))d1[j]=d1[j+1]^(1<<GIGA);
                 }
                 if(d1[2]&(1<<ZOMBONI)){
@@ -198,8 +167,9 @@ class d_page{
         if(level==0)return 11;
         level--;
         if(level>=8)level=7;
-        uint32_t t=pos>>LENGTH;
+        int t=int(pos>>LENGTH);
         if(t==cur+2){
+            //printf("N\n");
             if(cur&1){
                 p1.init(scene,cur+2);
             }else{
@@ -208,6 +178,7 @@ class d_page{
             cur++;
         }
         if(t==cur-1){
+            //printf("P");
             if(cur&1){
                 p1.init(scene,cur-1);
             }else{
@@ -216,6 +187,7 @@ class d_page{
             cur--;
         }
         if(t!=cur && t!=cur+1){
+            //printf("J");
             if(t&1){
                 p1.init(scene,t);
                 p0.init(scene,t+1);
@@ -232,29 +204,8 @@ class d_page{
         }
     }
 };
-void disp(int x){
-    bool f=0;
-    for(int i=0;i<20;i++){
-        if(x&(1<<i)){
-            if(f){
-                std::cout<<", ";
-            }
-            f=1;
-            std::cout<<zombie_desc[i][0];
-        }
-    }
-}
-void calc_single(uint32_t seed,int uid,int mode,int scene,int begin,int end){
-    d_page p1(scene);
-    uint32_t l=(seed+uid+mode)*inv;
-    //p1.reset(scene,l);
-    for(int i=begin;i<end;i++){
-        int t=p1.get(l+i,i);
-        std::cout<<std::setw(4)<<i*2+1<<" - "<<std::setw(4)<<i*2+2<<" Flag: ";
-        disp(t);
-        std::cout<<std::endl;
-    }
-}
+
+
 
 class worker_base{
     private:
@@ -340,7 +291,7 @@ class worker_base{
 class worker_satisfy :public worker_base{
     public:
     uint32_t result;
-    bool found;
+    bool found=0;
     protected:
     virtual bool check(uint32_t,d_page&)=0;
     
@@ -408,533 +359,796 @@ class worker_limit :public worker_satisfy{
         return 1;
     }
 };
-
-int get_scene(std::string s){
-    std::transform(s.begin(),s.end(),s.begin(),::toupper);
-    for(int i=0;i<8;i++){
-        for(auto j=scene_desc[i].begin();j!=scene_desc[i].end();j++){
-            if(s==*j){
-                return i;
+class worker_minimum :public worker_base{
+    public:
+    uint32_t result;
+    long long target;
+    long long best=(1ull<<63)-1;
+    protected:
+    virtual long long get_value(uint32_t,d_page&)=0;
+    
+    private:
+    void work(){
+        d_page p(scene);
+        long long r1=(1ull<<63)-1;
+        uint32_t r2;
+        while(1){
+            mtx.lock();
+            task t=get();
+            mtx.unlock();
+            if(t.begin==t.end)break;
+            uint32_t cur=t.begin;
+            while(cur!=t.end){
+                long long x=get_value(cur,p);
+                if(x<r1){
+                    r1=x;
+                    r2=cur*101-offset;
+                }
+                cur++;
             }
-        }
-    }
-    throw std::invalid_argument("");
-}
-std::vector<std::string> splits={
-    "",
-    " ",
-    ",",
-    "£¬",
-    ".",
-    "\t"
-};
-int get_zombies(std::string s){
-    //no split
-    int res=0;
-    int len=s.length();
-    bool err=0;
-    for(int i=0;i<len;i+=2){
-        if(s[i]==' '||s[i]==','){
-            i--;
-            continue;
-        }
-        std::string sub=s.substr(i,2);
-        bool f=0;
-        for(int j=0;j<20;j++){
-            if(sub==zombie_desc[j][2]){
-                res|=(1<<j);
-                f=1;
+            mtx.lock();
+            if(r1<best){
+                best=r1;
+                result=r2;
+            }else{
+                r1=best;
+            }
+            if(r1<=target){
+                mtx.unlock();
                 break;
             }
-        }
-        if(!f){
-            err=1;
-            break;
+            mtx.unlock();
         }
     }
-    if(!err){
-        return res;
-    }
-    err=0;
-    res=0;
-    while(s.length()){
-        auto t0=s.length();
-        auto idx=splits.begin();
-        for(auto i=++splits.begin();i!=splits.end();i++){
-            auto t=s.find(*i,0);
-            if(t!=std::string::npos && t<t0){
-                
-                t0=t;
-                idx=i;
+};
+class worker_weight :public worker_minimum{
+    public:
+    int begin,end;
+    long long weight[1<<10][20];
+    private:
+    long long get_value(uint32_t i_seed,d_page& p){
+        long long value=0;
+        for(int i=begin;i<end;i++){
+            int t;
+            t=p.get(i_seed+i,i);
+            for(int j=0;j<20;j++){
+                if(t&(1<<j))value+=weight[i][j];
             }
         }
-        std::string s1=s.substr(0,t0);
-        s=s.substr(t0+idx->length());
-        if(s1.length()==0)continue;
+        return value;
+    }
+};
+namespace io_manager{
+    const std::vector<std::string> scene_desc[8] ={
+        {"DAY"     ,"DE" ,"D" ,"ç™½å¤©"  },
+        {"NIGHT"   ,"NE" ,"N" ,"å¤œæ™š"  ,"é»‘å¤œ"},
+        {"POOL"    ,"PE" ,"P" ,"æ³³æ± "  },
+        {"FOG"     ,"FE" ,"F" ,"æµ“é›¾"  ,"è¿·é›¾"},
+        {"ROOF"    ,"RE" ,"R" ,"å±‹é¡¶"  },
+        {"MOON"    ,"ME" ,"M" ,"æœˆå¤œ"  },
+        {"MUSHROOM","MGE","MG","è˜‘è‡å›­"},
+        {"AQUARIOM","AQE","AQ","æ°´æ—é¦†"}
+    };
+    const std::vector<std::string> zombie_desc[20] = {
+        {"æ™®åƒµ","æ™®","REGULAR"  ,"æ™®é€š"},
+        {"è·¯éšœ","éšœ","CONE"     },
+        {"æ’‘æ†","æ†","POLE"     },
+        {"é“æ¡¶","æ¡¶","BUCKET"   },
+        {"è¯»æŠ¥","æŠ¥","NEWSPAPER"},
+        {"é“é—¨","é—¨","DOOR"     },
+        {"æ©„æ¦„","æ©„","FOOTBALL" ,"å¤§çˆ·"},
+        {"èˆç‹","èˆ","DANCE"    },
+        {"æ½œæ°´","æ½œ","SNORKEL"  },
+        {"å†°è½¦","è½¦","ZOMBONI"  },
+        {"æµ·è±š","è±š","SOLPHIN"  },
+        {"å°ä¸‘","ä¸‘","JACK"     },
+        {"æ°”çƒ","æ°”","BALLOON"  },
+        {"çŸ¿å·¥","çŸ¿","DIGGER"   },
+        {"è·³è·³","è·³","POGO"     },
+        {"è¹¦æ","å·","BUNGEE"   ,"å°å·"},
+        {"æ‰¶æ¢¯","æ¢¯","LADDER"   ,"æ¢¯å­"},
+        {"æŠ•ç¯®","ç¯®","CATAPULT" },
+        {"ç™½çœ¼","ç™½","GARG"     },
+        {"çº¢çœ¼","çº¢","GIGA"     }
+    };
+    const std::vector<std::string> splits={
+        "",
+        " ",
+        ",",
+        "ï¼Œ",
+        ".",
+        "\t",
+        ":",
+        ";",
+        "ï¼›"
+    };
+    const std::vector<std::string> visiable={
+        "",
+        ",",
+        "ï¼Œ",
+        ".",
+        ":",
+        ";",
+        "ï¼›"
+    };
+    class special_value{
+        public:
+        int value;
+        special_value(int v){value=v;}
+    };
+    void disp(int x){
         bool f=0;
         for(int i=0;i<20;i++){
-            for(auto j=zombie_desc[i].begin();j!=zombie_desc[i].end();j++){
-                if(s1==*j){
-                    res|=(1<<i);
+            if(x&(1<<i)){
+                if(f){
+                    std::cout<<", ";
+                }
+                f=1;
+                std::cout<<zombie_desc[i][0];
+            }
+        }
+    }
+    int get_scene(){
+        std::string s;
+        std::getline(std::cin,s);
+        //std::transform(s.begin(),s.end(),s.begin(),::toupper);
+        for(int i=0;i<8;i++){
+            for(auto j=scene_desc[i].begin();j!=scene_desc[i].end();j++){
+                if(s==*j){
+                    return i;
+                }
+            }
+        }
+        throw std::invalid_argument("");
+    }
+    int get_scene(int def){
+        std::string s;
+        std::getline(std::cin,s);
+        //std::transform(s.begin(),s.end(),s.begin(),::toupper);
+        if(s=="")return def;
+        for(int i=0;i<8;i++){
+            for(auto j=scene_desc[i].begin();j!=scene_desc[i].end();j++){
+                if(s==*j){
+                    return i;
+                }
+            }
+        }
+        throw std::invalid_argument("");
+    }
+    
+    int get_zombies(){
+        std::string s;
+        std::getline(std::cin,s);
+        //no split
+        if(s=="P"||s=="PASS")throw special_value(1);
+        if(s=="A"||s=="ALL"||s=="O"||s=="OTHER")throw special_value(2);
+        int res=0;
+        int len=s.length();
+        bool err=0;
+        for(int i=0;i<len;i+=2){
+            if(s[i]==' '||s[i]==','){
+                i--;
+                continue;
+            }
+            std::string sub=s.substr(i,2);
+            
+            //std::transform(sub.begin(),sub.end(),sub.begin(),::toupper);
+            bool f=0;
+            for(int j=0;j<20;j++){
+                if(sub==zombie_desc[j][1]){
+                    res|=(1<<j);
                     f=1;
                     break;
                 }
             }
-            if(f)break;
-        }
-        if(!f){
-            err=1;
-            break;
-        }
-    }
-    if(err){
-        throw std::invalid_argument("");
-    }
-    return res;
-}
-int get_single_zombie(std::string s){
-    for(int i=0;i<20;i++){
-        for(auto j=zombie_desc[i].begin();j<zombie_desc[i].end();j++){
-            if(s==*j){
-                return i;
+            if(!f){
+                err=1;
+                break;
             }
         }
+        if(!err){
+            return res;
+        }
+        err=0;
+        res=0;
+        while(s.length()){
+            auto t0=s.length();
+            auto idx=splits.begin();
+            for(auto i=++splits.begin();i!=splits.end();i++){
+                auto t=s.find(*i,0);
+                if(t!=std::string::npos && t<t0){
+                    
+                    t0=t;
+                    idx=i;
+                }
+            }
+            std::string s1=s.substr(0,t0);
+            s=s.substr(t0+idx->length());
+            if(s1.length()==0)continue;
+            bool f=0;
+            for(int i=0;i<20;i++){
+                for(auto j=zombie_desc[i].begin();j!=zombie_desc[i].end();j++){
+                    if(s1==*j){
+                        res|=(1<<i);
+                        f=1;
+                        break;
+                    }
+                }
+                if(f)break;
+            }
+            if(!f){
+                err=1;
+                break;
+            }
+        }
+        if(err){
+            throw std::invalid_argument("");
+        }
+        return res;
     }
-    throw std::invalid_argument("");
+    int get_single_zombie(){
+        std::string s;
+        std::getline(std::cin,s);
+        for(int i=0;i<20;i++){
+            for(auto j=zombie_desc[i].begin();j<zombie_desc[i].end();j++){
+                if(s==*j){
+                    return i;
+                }
+            }
+        }
+        throw std::invalid_argument("");
+    }
+    long long get_number(long long min=0,long long max=0,long long def=-1){
+        std::string input;
+        std::getline(std::cin,input);
+        if(input==""){
+            if(def>=0)return def;
+            throw std::invalid_argument("");
+        }else{
+            long long x=std::stoll(input,0,10);
+            if(min!=max && (x<min||x>=max))throw std::out_of_range("");
+            return x;
+        }
+    }
+    long long get_hex(long long min=0,long long max=0,long long def=-1){
+        std::string input;
+        std::getline(std::cin,input);
+        if(input==""){
+            if(def>=0)return def;
+            throw std::invalid_argument("");
+        }else{
+            long long x=std::stoll(input,0,16);
+            if(min!=max && (x<min||x>=max))throw std::out_of_range("");
+            return x;
+        }
+    }
+    void get_kv(long long value[20]){
+        std::string s,s0;
+        std::getline(std::cin,s);
+        s0=s;
+        //no split
+        if(s=="P"||s=="PASS")throw special_value(1);
+        for(int i=0;i<20;i++)value[i]=0;
+        try{
+            int pos=0;
+            while(s.length()){
+                auto t0=s.length();
+                auto idx=visiable.begin();
+                bool sp=0;
+                for(auto i=++visiable.begin();i!=visiable.end();i++){
+                    auto t=s.find(*i,0);
+                    if(t!=std::string::npos && t<t0){
+                        t0=t;
+                        idx=i;
+                    }
+                }
+                std::string s1=s.substr(0,t0);
+                s=s.substr(t0+idx->length());
+                
+                bool f=0;
+                while(s1.length()){
+                    auto t1=s1.length();
+                    auto idx2=splits.begin();
+                    for(auto i=++splits.begin();i!=splits.end();i++){
+                        auto t=s1.find(*i,0);
+                        if(t!=std::string::npos && t<t1){
+                            t1=t;
+                            idx2=i;
+                        }
+                    }
+                    std::string s2=s1.substr(0,t1);
+                    s1=s1.substr(t1+idx2->length());
+                    if(s2.length()==0)continue;
+                    try{
+                        if(pos>=20)throw 0;
+                        f=1;
+                        value[pos++]=std::stoll(s2);
+                    }catch(std::invalid_argument const& e){
+                        throw 0;
+                    }catch(std::out_of_range const& e){
+                        throw 0;
+                    }
+                }
+                if(f==0){
+                    if(pos==20)throw 0;
+                    value[pos++]=0;
+                }
+            }
+        }catch(int const& e){
+            s=s0;
+            int prev=-1;
+            while(s.length()){
+                auto t0=s.length();
+                auto idx=splits.begin();
+                for(auto i=++splits.begin();i!=splits.end();i++){
+                    auto t=s.find(*i,0);
+                    if(t!=std::string::npos && t<t0){
+                        t0=t;
+                        idx=i;
+                    }
+                }
+                std::string s1=s.substr(0,t0);
+                s=s.substr(t0+idx->length());
+                if(s1.length()==0)continue;
+                bool f=0;
+                
+                if(prev==-1){
+                    for(int i=0;i<20;i++){
+                        for(auto j=zombie_desc[i].begin();j!=zombie_desc[i].end();j++){
+                            std::string s2=s1.substr(0,j->length());
+                            if(s2==*j){
+                                try{
+                                    value[i]=std::stoll(s1.substr(j->length()));
+                                    f=1;
+                                    break;
+                                }catch(std::invalid_argument const& e){}
+                            }
+                        }
+                        if(f)break;
+                    }
+                }
+                if(f){
+                    continue;
+                }
+                f=0;
+                for(int i=0;i<20;i++){
+                    for(auto j=zombie_desc[i].begin();j!=zombie_desc[i].end();j++){
+                        if(s1==*j){
+                            if(prev!=-1)throw std::invalid_argument("");
+                            prev=i;
+                            f=1;
+                            break;
+                        }
+                    }
+                    if(f)break;
+                }
+                if(f){
+                    continue;
+                }
+                if(prev==-1)throw std::invalid_argument("");
+                value[prev]=std::stoll(s1);
+                prev=-1;
+            }
+            return;
+        }
+        
+        
+        
+    }
+}
+void calc_single(uint32_t seed,int uid,int mode,int scene,int begin,int end){
+    d_page p1(scene);
+    uint32_t l=(seed+uid+mode)*inv;
+    //p1.reset(scene,l);
+    for(int i=begin;i<end;i++){
+        int t=p1.get(l+i,i);
+        std::cout<<std::setw(4)<<i*2+1<<" - "<<std::setw(4)<<i*2+2<<" Flag: ";
+        io_manager::disp(t);
+        std::cout<<std::endl;
+    }
 }
 int main(){
     while(1){
-        std::cout<<"1. ¸ù¾İÖÖ×Ó¼ÆËã³ö¹Ö"<<std::endl;
-        std::cout<<"2. °´Ã¿¹ØµÄ³ö¹ÖÇó³öÖÖ×Ó"<<std::endl;
-        std::cout<<"3. ÏŞÖÆµ¥¸ö¹ÖµÄ´ÎÊı£¬Çó³öÖÖ×Ó"<<std::endl;
-        std::cout<<"Ñ¡ÔñÄ£Ê½£¬»ò°´»Ø³µÍË³ö: ";
+        
+        std::cout<<"0. æŸ¥çœ‹å¸®åŠ©"<<std::endl;
+        std::cout<<"1. æ ¹æ®ç§å­è®¡ç®—å‡ºæ€ª"<<std::endl;
+        std::cout<<"2. æŒ‰å‡ºæ€ªæ±‚ç§å­"<<std::endl;
+        std::cout<<"3. æŒ‰å•ä¸ªæ€ªçš„æœ€å¤§æ¬¡æ•°æ±‚ç§å­"<<std::endl;
+        std::cout<<"4. æŒ‰å¨èƒå€¼æ±‚ç§å­"<<std::endl;
+        std::cout<<"5. æ¢ç®—ç§å­"<<std::endl;
+        std::cout<<"s. è®¾ç½®"<<std::endl;
+        std::cout<<"é€‰æ‹©æ¨¡å¼, æˆ–æŒ‰å›è½¦é€€å‡º: ";
         std::string mode;
         std::getline(std::cin,mode);
-        if(mode=="1"){
+        if(mode=="0"){
+            
+            std::cout<<"0. ç®€ä»‹"<<std::endl;
+            std::cout<<"1. æ ¹æ®ç§å­è®¡ç®—å‡ºæ€ª"<<std::endl;
+            std::cout<<"2. æŒ‰å‡ºæ€ªæ±‚ç§å­"<<std::endl;
+            std::cout<<"3. æŒ‰å•ä¸ªæ€ªçš„æœ€å¤§æ¬¡æ•°æ±‚ç§å­"<<std::endl;
+            std::cout<<"4. æŒ‰å¨èƒå€¼æ±‚ç§å­"<<std::endl;
+            std::cout<<"5. æ¢ç®—ç§å­"<<std::endl;
+            
+            std::cout<<"n. æŸ¥çœ‹åç§°/ç®€ç§°/åˆ«ååˆ—è¡¨"<<std::endl;
+            std::cout<<"q. è¿”å›ä¸»èœå•"<<std::endl;
+            
+            std::cout<<"è¯·é€‰æ‹©é¡µé¢:";
+            std::getline(std::cin,mode);
+            if(mode=="0"){
+                std::cout<<"ä½œè€…: Hope2075"<<std::endl;
+                std::cout<<"å‚è€ƒäº†æ˜Ÿé”¦æŸ’å¥ˆçš„åŠŸèƒ½"<<std::endl;
+                std::cout<<""<<std::endl;
+                std::cout<<"æœ¬è½¯ä»¶å¯ä»¥æ ¹æ®ç§å­è®¡ç®—å‡ºæ€ª, æˆ–ç»™å®šæ¡ä»¶ç­›é€‰ç§å­"<<std::endl;
+                std::cout<<"é»˜è®¤ä¸ºå•çº¿ç¨‹, å¦‚æœ‰éœ€è¦å¯ä»¥è¿›å…¥è®¾ç½®é¡µæ”¹ä¸ºå¤šçº¿ç¨‹"<<std::endl;
+                std::cout<<"è¾“å…¥æ”¯æŒä¸­æ–‡å’Œè‹±æ–‡, è¯·æŸ¥çœ‹å…¶å®ƒé¡µé¢"<<std::endl;
+                std::cout<<""<<std::endl;
+                std::cout<<"è½¯ä»¶è¿˜åœ¨æµ‹è¯•é˜¶æ®µ"<<std::endl;
+                std::cout<<"å¦‚æœå‡ºç°ä¸æ˜åŸå› æŠ¥é”™/é—ªé€€, æˆ–è€…è®¡ç®—ç»“æœé”™è¯¯"<<std::endl;
+                std::cout<<"è¯·å‘ä½œè€…åé¦ˆ"<<std::endl;
+            }else if(mode=="1"){
+                std::cout<<"åŠŸèƒ½: æ ¹æ®ç§å­è®¡ç®—å‡ºæ€ª"<<std::endl;
+                std::cout<<"åœºåœ°å¯ä»¥è¾“å…¥ä¸­æ–‡æˆ–è‹±æ–‡"<<std::endl;
+                std::cout<<"   å¦‚: æ³³æ±  POOL PE å‡å¯è¯†åˆ«"<<std::endl;
+            }else if(mode=="2"){
+                std::cout<<"åŠŸèƒ½: ç»™å‡ºæ¯ä¸€å…³å¯ä»¥/ä¸å¯ä»¥å‡ºç°çš„æ€ª, ç­›é€‰åˆé€‚çš„ç§å­"<<std::endl;
+                std::cout<<"å‡ºæ€ªæƒ…å†µæ ¼å¼å¦‚ä¸‹"<<std::endl;
+                std::cout<<"  1. ç›´æ¥è¾“å…¥åƒµå°¸ç®€ç§°, ä¸­é—´æ²¡æœ‰åˆ†éš”"<<std::endl;
+                std::cout<<"     ç¤ºä¾‹: è½¦ä¸‘æ©„èˆ"<<std::endl;
+                std::cout<<"  2. è¾“å…¥åƒµå°¸åç§°, ä¸­é—´æœ‰åˆ†éš”"<<std::endl;
+                std::cout<<"     åƒµå°¸å¯ä»¥è¾“å…¥å…¨ç§°/ç®€ç§°/åˆ«å"<<std::endl;
+                std::cout<<"     åˆ†éš”ç¬¦å¯ä»¥ä¸ºé€—å·ã€ç©ºæ ¼ç­‰"<<std::endl;
+                std::cout<<"     ç¤ºä¾‹: è·¯éšœ å¤§çˆ·,ç™½ GIGA"<<std::endl;
+                std::cout<<"åœºåœ°å¯ä»¥è¾“å…¥ä¸­æ–‡æˆ–è‹±æ–‡"<<std::endl;
+                std::cout<<"   å¦‚: æ³³æ±  POOL PE å‡å¯è¯†åˆ«"<<std::endl;
+            }else if(mode=="3"){
+                std::cout<<"åŠŸèƒ½: ç»™å‡ºæŸç§æ€ªåœ¨ç»™å®šèŒƒå›´å†…æœ€å¤šå‡ºç°çš„æ¬¡æ•°, ç­›é€‰åˆé€‚çš„ç§å­"<<std::endl;
+                std::cout<<"åƒµå°¸å¯ä»¥è¾“å…¥å…¨ç§°/ç®€ç§°/åˆ«å"<<std::endl;
+                std::cout<<"   å¦‚: æ©„æ¦„ æ©„ FOOTBALL å¤§çˆ· å‡å¯è¯†åˆ«"<<std::endl;
+                std::cout<<"åœºåœ°å¯ä»¥è¾“å…¥ä¸­æ–‡æˆ–è‹±æ–‡"<<std::endl;
+                std::cout<<"   å¦‚: æ³³æ±  POOL PE å‡å¯è¯†åˆ«"<<std::endl;
+            }else if(mode=="4"){
+                std::cout<<"åŠŸèƒ½: ç»™å‡ºæ¯ä¸€å…³æ¯ç§æ€ªçš„å¨èƒåº¦, ç­›é€‰å¨èƒåº¦æœ€ä½çš„ç§å­"<<std::endl;
+                std::cout<<"å¨èƒåº¦æ ¼å¼å¦‚ä¸‹"<<std::endl;
+                std::cout<<"  1. ç›´æ¥æŒ‰é¡ºåºè¾“å…¥æ•°å­—, ä¸­é—´æœ‰åˆ†éš”"<<std::endl;
+                std::cout<<"     åˆ†éš”ç¬¦å¯ä»¥ä¸ºé€—å·ã€ç©ºæ ¼ç­‰"<<std::endl;
+                std::cout<<"     é¡ºåºä¸º: ";
+                for(int i=0;i<20;i++){
+                    std::cout<<io_manager::zombie_desc[i][1];
+                }
+                std::cout<<std::endl;
+                std::cout<<"     ç¤ºä¾‹: ,,,,,,5,,,10,2,3,5,2,,2,7,2,10,20"<<std::endl;
+                std::cout<<"     ä¹Ÿå¯ä»¥è¿™æ ·:  , ,0,,,,5 , , ,10 2 3,5,2,,2,7,2,10,20"<<std::endl;
+                std::cout<<"     ä»¥ä¸Šä¸¤ç§å®é™…å«ä¹‰ç›¸åŒ"<<std::endl;
+                std::cout<<"     ç•™ç©ºè¡¨ç¤ºå¨èƒåº¦ä¸º0"<<std::endl;
+                std::cout<<"  2. è¾“å…¥åƒµå°¸åç§°, åé¢è·Ÿå¨èƒåº¦, ä¸¤ä¸ªä¸åŒåƒµå°¸çš„å¨èƒåº¦ä¹‹é—´æœ‰åˆ†éš”"<<std::endl;
+                std::cout<<"     åƒµå°¸å¯ä»¥è¾“å…¥å…¨ç§°/ç®€ç§°/åˆ«å"<<std::endl;
+                std::cout<<"     åˆ†éš”ç¬¦å¯ä»¥ä¸ºé€—å·ã€ç©ºæ ¼ç­‰"<<std::endl;
+                std::cout<<"     åƒµå°¸åç§°å¯ä»¥ç´§è·Ÿå¨èƒåº¦"<<std::endl;
+                std::cout<<"     ç¤ºä¾‹: è·¯éšœ2 å¤§çˆ· 5"<<std::endl;
+                std::cout<<"åœºåœ°å¯ä»¥è¾“å…¥ä¸­æ–‡æˆ–è‹±æ–‡"<<std::endl;
+                std::cout<<"   å¦‚: æ³³æ±  POOL PE å‡å¯è¯†åˆ«"<<std::endl;
+            }else if(mode=="5"){
+                std::cout<<"åŠŸèƒ½: å°†ä¸€ä¸ªå­˜æ¡£çš„å‡ºæ€ªç§å­æ¢ç®—åˆ°å¦ä¸€ä¸ªç§å­"<<std::endl;
+                std::cout<<"åœºåœ°å¯ä»¥è¾“å…¥ä¸­æ–‡æˆ–è‹±æ–‡"<<std::endl;
+                std::cout<<"   å¦‚: æ³³æ±  POOL PE å‡å¯è¯†åˆ«"<<std::endl;
+                
+            }else if(mode=="q"){
+                
+            }else{
+                std::cout<<"è¾“å…¥æ ¼å¼é”™è¯¯"<<std::endl;
+            }
+            continue;
+        }else if(mode=="1"){
             uint32_t seed;
             int mode,uid,scene,begin,end;
-            std::string input;
-
-            std::cout<<"ÖÖ×Ó(Ê®Áù½øÖÆ): ";
-            std::getline(std::cin,input);
             try{
-                long long s0=std::stoll(input,0,16);
-                if(s0<0 || s0>=(1ll<<32))throw std::out_of_range("");
-                seed=s0;
-            }catch(std::invalid_argument e){
-                std::cout<<"ÖÖ×Ó¸ñÊ½´íÎó£¡"<<std::endl;
-                continue;
-            }catch(std::out_of_range e){
-                std::cout<<"ÖÖ×ÓÊıÖµ·Ç·¨£¡"<<std::endl;
-                continue;
-            }
+                std::cout<<"ç§å­(åå…­è¿›åˆ¶): ";
+                seed=io_manager::get_hex(0,1ll<<32,-1);
+                
+                std::cout<<"åœºæ™¯(é»˜è®¤ä¸ºæ³³æ± ): ";
+                scene=io_manager::get_scene(POOL);
 
-            std::cout<<"³¡¾°(Ä¬ÈÏÎªÓ¾³Ø): ";
-            std::getline(std::cin,input);
-            if(input==""){
-                scene=POOL;
-            }else{
-                try{
-                    scene=get_scene(input);
-                }catch(std::invalid_argument e){
-                    std::cout<<"³¡¾°¸ñÊ½´íÎó£¡"<<std::endl;
-                    continue;
-                }
+                std::cout<<"ç”¨æˆ·ç¼–å·(é»˜è®¤ä¸º1): ";
+                uid=io_manager::get_number(0,0,1);
+                
+                std::cout<<"å­˜æ¡£ç¼–å·(é»˜è®¤ä¸º13): ";
+                mode=io_manager::get_number(0,0,13);
+                
+                std::cout<<"èµ·å§‹æ——å¸œæ•°(å¥‡æ•°): ";
+                begin=io_manager::get_number();
+                if((begin&1)!=1)throw std::out_of_range("");
+                
+                std::cout<<"ç»ˆæ­¢æ——å¸œæ•°(å¶æ•°), ç›´æ¥è¾“å…¥å›è½¦åˆ™è®¡ç®—å½“å‰å…³: ";
+                end=io_manager::get_number(0,0,begin+1);
+                if((end&1)!=0)throw std::out_of_range("");
+
+                begin/=2;
+                end/=2;
+
+            }catch(std::invalid_argument const& e){
+                std::cout<<"è¾“å…¥æ ¼å¼é”™è¯¯!"<<std::endl;
+                continue;
+            }catch(std::out_of_range const& e){
+                std::cout<<"è¾“å…¥æ ¼å¼é”™è¯¯!"<<std::endl;
+                continue;
             }
             
-
-            std::cout<<"ÓÃ»§±àºÅ(Ä¬ÈÏÎª1): ";
-            std::getline(std::cin,input);
-            if(input==""){
-                uid=1;
-            }else{
-                try{
-                    uid=std::stoul(input,0,10);
-                }catch(std::invalid_argument e){
-                    std::cout<<"ÓÃ»§±àºÅ¸ñÊ½´íÎó£¡"<<std::endl;
-                    continue;
-                }catch(std::out_of_range e){
-                    std::cout<<"ÓÃ»§±àºÅÊıÖµ·Ç·¨£¡"<<std::endl;
-                    continue;
-                }
-            }
-
-            std::cout<<"´æµµ±àºÅ(Ä¬ÈÏÎª13): ";
-            std::getline(std::cin,input);
-            if(input==""){
-                mode=13;
-            }else{
-                try{
-                    mode=std::stoul(input,0,10);
-                }catch(std::invalid_argument e){
-                    std::cout<<"´æµµ±àºÅ¸ñÊ½´íÎó£¡"<<std::endl;
-                    continue;
-                }catch(std::out_of_range e){
-                    std::cout<<"´æµµ±àºÅÊıÖµ·Ç·¨£¡"<<std::endl;
-                    continue;
-                }
-            }
-
-            std::cout<<"ÆğÊ¼ÆìÖÄÊı(ÆæÊı): ";
-            std::getline(std::cin,input);
-            try{
-                begin=std::stol(input,0,10);
-                if(begin<0||begin%2==0)throw std::out_of_range("");
-                begin/=2;
-            }catch(std::invalid_argument e){
-                std::cout<<"ÆğÊ¼ÆìÖÄÊı¸ñÊ½´íÎó£¡"<<std::endl;
-                continue;
-            }catch(std::out_of_range e){
-                std::cout<<"ÆğÊ¼ÆìÖÄÊıÊıÖµ·Ç·¨£¡"<<std::endl;
-                continue;
-            }
-
-            std::cout<<"ÖÕÖ¹ÆìÖÄÊı(Å¼Êı)£¬Ö±½ÓÊäÈë»Ø³µÔò¼ÆËãµ±Ç°¹Ø: ";
-            std::getline(std::cin,input);
-            try{
-                if(input==""){
-                    end=begin+1;
-                }else{
-                    end=std::stol(input,0,10);
-                    if(end<0||end%2==1)throw std::out_of_range("");
-                    end/=2;
-                    if(end<=begin)throw std::out_of_range("");
-                }
-            }catch(std::invalid_argument e){
-                std::cout<<"ÖÕÖ¹ÆìÖÄÊı¸ñÊ½´íÎó£¡"<<std::endl;
-                continue;
-            }catch(std::out_of_range e){
-                std::cout<<"ÖÕÖ¹ÆìÖÄÊıÊıÖµ·Ç·¨£¡"<<std::endl;
-                continue;
-            }
             calc_single(seed,uid,mode,scene,begin,end);
-            //calc_single(0x09a6313b,1,13,POOL,0,40);
         }else if(mode=="2"){
             uint32_t seed;
             int mode,uid,scene,begin,end;
             long long maxn;
-            std::string input;
             worker_type wk;
-
-            std::cout<<"ÆğÊ¼ÖÖ×Ó(Ê®Áù½øÖÆ)(Ä¬ÈÏÎª0): ";
-            std::getline(std::cin,input);
-            if(input==""){
-                seed=0;
-            }else{
-                try{
-                    long long s0=std::stoll(input,0,16);
-                    if(s0<0 || s0>=(1ll<<32))throw std::out_of_range("");
-                    seed=s0;
-                }catch(std::invalid_argument e){
-                    std::cout<<"ÖÖ×Ó¸ñÊ½´íÎó£¡"<<std::endl;
-                    continue;
-                }catch(std::out_of_range e){
-                    std::cout<<"ÖÖ×ÓÊıÖµ·Ç·¨£¡"<<std::endl;
-                    continue;
-                }
-            }
-
-            std::cout<<"×î´ó·¶Î§(Ä¬ÈÏ¼ÆËãËùÓĞÖÖ×Ó): ";
-            std::getline(std::cin,input);
             try{
-                if(input==""){
-                    maxn=1ll<<31;
-                }else{
-                    maxn=std::stol(input,0,10);
-                    if(maxn<=0||maxn>(1ll<<31))throw std::out_of_range("");
-                }
-            }catch(std::invalid_argument e){
-                std::cout<<"×î´ó·¶Î§¸ñÊ½´íÎó£¡"<<std::endl;
-                continue;
-            }catch(std::out_of_range e){
-                std::cout<<"×î´ó·¶Î§ÊıÖµ·Ç·¨£¡"<<std::endl;
-                continue;
-            }
+                std::cout<<"èµ·å§‹ç§å­(åå…­è¿›åˆ¶,é»˜è®¤ä¸º0): ";
+                seed=io_manager::get_hex(0,1ll<<32,0);
+                
+                std::cout<<"æœ€å¤§èŒƒå›´(é»˜è®¤è®¡ç®—æ‰€æœ‰ç§å­): ";
+                maxn=io_manager::get_number(1,(1ll<<31)+1,1ll<<31);
 
-            std::cout<<"³¡¾°(Ä¬ÈÏÎªÓ¾³Ø): ";
-            std::getline(std::cin,input);
-            if(input==""){
-                scene=POOL;
-            }else{
-                try{
-                    scene=get_scene(input);
-                }catch(std::invalid_argument e){
-                    std::cout<<"³¡¾°¸ñÊ½´íÎó£¡"<<std::endl;
-                    continue;
-                }
-            }
-            
+                std::cout<<"åœºæ™¯(é»˜è®¤ä¸ºæ³³æ± ): ";
+                scene=io_manager::get_scene(POOL);
 
-            std::cout<<"ÓÃ»§±àºÅ(Ä¬ÈÏÎª1): ";
-            std::getline(std::cin,input);
-            if(input==""){
-                uid=1;
-            }else{
-                try{
-                    uid=std::stoul(input,0,10);
-                }catch(std::invalid_argument e){
-                    std::cout<<"ÓÃ»§±àºÅ¸ñÊ½´íÎó£¡"<<std::endl;
-                    continue;
-                }catch(std::out_of_range e){
-                    std::cout<<"ÓÃ»§±àºÅÊıÖµ·Ç·¨£¡"<<std::endl;
-                    continue;
-                }
-            }
+                std::cout<<"ç”¨æˆ·ç¼–å·(é»˜è®¤ä¸º1): ";
+                uid=io_manager::get_number(0,0,1);
+                
+                std::cout<<"å­˜æ¡£ç¼–å·(é»˜è®¤ä¸º13): ";
+                mode=io_manager::get_number(0,0,13);
+                
+                std::cout<<"èµ·å§‹æ——å¸œæ•°(å¥‡æ•°): ";
+                begin=io_manager::get_number();
+                if((begin&1)!=1)throw std::out_of_range("");
+                
+                std::cout<<"ç»ˆæ­¢æ——å¸œæ•°(å¶æ•°), ç›´æ¥è¾“å…¥å›è½¦åˆ™è®¡ç®—å½“å‰å…³: ";
+                end=io_manager::get_number(0,0,begin+1);
+                if((end&1)!=0)throw std::out_of_range("");
 
-            std::cout<<"´æµµ±àºÅ(Ä¬ÈÏÎª13): ";
-            std::getline(std::cin,input);
-            if(input==""){
-                mode=13;
-            }else{
-                try{
-                    mode=std::stoul(input,0,10);
-                }catch(std::invalid_argument e){
-                    std::cout<<"´æµµ±àºÅ¸ñÊ½´íÎó£¡"<<std::endl;
-                    continue;
-                }catch(std::out_of_range e){
-                    std::cout<<"´æµµ±àºÅÊıÖµ·Ç·¨£¡"<<std::endl;
-                    continue;
-                }
-            }
-
-            std::cout<<"ÆğÊ¼ÆìÖÄÊı(ÆæÊı): ";
-            std::getline(std::cin,input);
-            try{
-                begin=std::stol(input,0,10);
-                if(begin<0||begin%2==0)throw std::out_of_range("");
                 begin/=2;
-            }catch(std::invalid_argument e){
-                std::cout<<"ÆğÊ¼ÆìÖÄÊı¸ñÊ½´íÎó£¡"<<std::endl;
-                continue;
-            }catch(std::out_of_range e){
-                std::cout<<"ÆğÊ¼ÆìÖÄÊıÊıÖµ·Ç·¨£¡"<<std::endl;
-                continue;
-            }
+                end/=2;
 
-            std::cout<<"ÖÕÖ¹ÆìÖÄÊı(Å¼Êı)£¬Ö±½ÓÊäÈë»Ø³µÔò¼ÆËãµ±Ç°¹Ø: ";
-            std::getline(std::cin,input);
-            try{
-                if(input==""){
-                    end=begin+1;
-                }else{
-                    end=std::stol(input,0,10);
-                    if(end<0||end%2==1)throw std::out_of_range("");
-                    end/=2;
-                    if(end<=begin)throw std::out_of_range("");
-                }
-            }catch(std::invalid_argument e){
-                std::cout<<"ÖÕÖ¹ÆìÖÄÊı¸ñÊ½´íÎó£¡"<<std::endl;
-                continue;
-            }catch(std::out_of_range e){
-                std::cout<<"ÖÕÖ¹ÆìÖÄÊıÊıÖµ·Ç·¨£¡"<<std::endl;
-                continue;
-            }
-            wk.begin=begin;
-            wk.end=end;
-            try{
                 int include=1;
                 int exclude=0;
                 for(int i=begin;i<end;i++){
-                    std::cout<<std::setw(4)<<i*2+1<<" -"<<std::setw(4)<<i*2+2<<" flag µÄĞÅÏ¢"<<std::endl;
-                    std::cout<<"°üº¬ÒÔÏÂ½©Ê¬£¬ÊäÈë\"P\"ÔòÖ®ºóÊ¹ÓÃÉÏÒ»¹ØµÄÉèÖÃ£º";
-                    std::getline(std::cin,input);
-                    if(input=="P"){
+                    std::cout<<std::setw(4)<<i*2+1<<" -"<<std::setw(4)<<i*2+2<<" flag çš„ä¿¡æ¯"<<std::endl;
+                    std::cout<<"åŒ…å«ä»¥ä¸‹åƒµå°¸, è¾“å…¥\"P\"åˆ™ä¹‹åä½¿ç”¨ä¸Šä¸€å…³çš„è®¾ç½®: ";
+                    try{
+                        include=io_manager::get_zombies();
+                    }catch(io_manager::special_value const& s){
+                        if(s.value!=1)throw std::invalid_argument("");
+                        if(i==begin){
+                            throw std::invalid_argument("");
+                        }
                         for(int j=i;j<end;j++){
                             wk.include[j]=include;
                             wk.exclude[j]=exclude;
                         }
                         break;
                     }
-                    include=get_zombies(input);
-                    std::cout<<"²»°üº¬ÒÔÏÂ½©Ê¬£¬ÊäÈë»Ø³µÔò²»×÷ÏŞÖÆ£¬ÊäÈë\"A\"ÔòÅÅ³ıÆäËü½©Ê¬£º";
-                    std::getline(std::cin,input);
-                    if(input=="A"){
+
+                    std::cout<<"ä¸åŒ…å«ä»¥ä¸‹åƒµå°¸, è¾“å…¥å›è½¦åˆ™ä¸ä½œé™åˆ¶, è¾“å…¥\"A\"åˆ™æ’é™¤å…¶å®ƒæ‰€æœ‰åƒµå°¸(é™¤æ™®åƒµ): ";
+                    try{
+                        exclude=io_manager::get_zombies();
+                    }catch(io_manager::special_value const& s){
+                        if(s.value!=2)throw std::invalid_argument("");
                         exclude=~include;
-                    }else{  
-                        exclude=get_zombies(input);
                     }
+                    std::cout<<exclude<<std::endl;
                     exclude&=0xfffffffe;
                     wk.include[i]=include;
                     wk.exclude[i]=exclude;
+                    //std::cout<<include<<" "<<exclude<<std::endl;
                 }
-            }catch(std::invalid_argument e){
-                std::cout<<"ÊäÈë¸ñÊ½´íÎó£¡"<<std::endl;
+            }catch(std::invalid_argument const& e){
+                std::cout<<"è¾“å…¥æ ¼å¼é”™è¯¯!"<<std::endl;
+                continue;
+            }catch(std::out_of_range const& e){
+                std::cout<<"è¾“å…¥æ ¼å¼é”™è¯¯!"<<std::endl;
                 continue;
             }
-
+            
             wk.set(seed,uid,mode,scene,maxn,0);
-            wk.works(8);
-            std::cout<<"ÓÃÊ±:"<<std::setw(10)<<std::setprecision(3)<<wk.times/1000.0<<"Ãë"<<std::endl;
+            wk.begin=begin;
+            wk.end=end;
+            wk.works(TRDS);
+            std::cout<<"ç”¨æ—¶:"<<std::setw(10)<<std::setprecision(3)<<wk.times/1000.0<<"ç§’"<<std::endl;
 
             if(wk.found){
-                std::cout<<"³É¹¦ÕÒµ½ÖÖ×Ó£º"<<std::setw(8)<<std::hex<<wk.result<<std::dec<<std::endl;
+                std::cout<<"æˆåŠŸæ‰¾åˆ°ç§å­: "<<std::setw(8)<<std::hex<<wk.result<<std::dec<<std::endl;
             }else{
-                std::cout<<"Î´ÄÜÕÒµ½ÖÖ×Ó"<<std::endl;
+                std::cout<<"æœªèƒ½æ‰¾åˆ°ç§å­"<<std::endl;
             }
         }else if(mode=="3"){
             uint32_t seed;
             int mode,uid,scene,begin,end;
             long long maxn;
-            std::string input;
             worker_limit wk;
             int target,limit;
 
-            std::cout<<"ÆğÊ¼ÖÖ×Ó(Ê®Áù½øÖÆ)(Ä¬ÈÏÎª0): ";
-            std::getline(std::cin,input);
-            if(input==""){
-                seed=0;
-            }else{
-                try{
-                    long long s0=std::stoll(input,0,16);
-                    if(s0<0 || s0>=(1ll<<32))throw std::out_of_range("");
-                    seed=s0;
-                }catch(std::invalid_argument e){
-                    std::cout<<"ÖÖ×Ó¸ñÊ½´íÎó£¡"<<std::endl;
-                    continue;
-                }catch(std::out_of_range e){
-                    std::cout<<"ÖÖ×ÓÊıÖµ·Ç·¨£¡"<<std::endl;
-                    continue;
-                }
-            }
-
-            std::cout<<"×î´ó·¶Î§(Ä¬ÈÏ¼ÆËãËùÓĞÖÖ×Ó): ";
-            std::getline(std::cin,input);
             try{
-                if(input==""){
-                    maxn=1ll<<31;
-                }else{
-                    maxn=std::stol(input,0,10);
-                    if(maxn<=0||maxn>(1ll<<31))throw std::out_of_range("");
-                }
-            }catch(std::invalid_argument e){
-                std::cout<<"×î´ó·¶Î§¸ñÊ½´íÎó£¡"<<std::endl;
-                continue;
-            }catch(std::out_of_range e){
-                std::cout<<"×î´ó·¶Î§ÊıÖµ·Ç·¨£¡"<<std::endl;
-                continue;
-            }
+                std::cout<<"èµ·å§‹ç§å­(åå…­è¿›åˆ¶,é»˜è®¤ä¸º0): ";
+                seed=io_manager::get_hex(0,1ll<<32,0);
+                
+                std::cout<<"æœ€å¤§èŒƒå›´(é»˜è®¤è®¡ç®—æ‰€æœ‰ç§å­): ";
+                maxn=io_manager::get_number(1,(1ll<<31)+1,1ll<<31);
 
-            std::cout<<"³¡¾°(Ä¬ÈÏÎªÓ¾³Ø): ";
-            std::getline(std::cin,input);
-            if(input==""){
-                scene=POOL;
-            }else{
-                try{
-                    scene=get_scene(input);
-                }catch(std::invalid_argument e){
-                    std::cout<<"³¡¾°¸ñÊ½´íÎó£¡"<<std::endl;
-                    continue;
-                }
+                std::cout<<"åœºæ™¯(é»˜è®¤ä¸ºæ³³æ± ): ";
+                scene=io_manager::get_scene(POOL);
+
+                std::cout<<"ç”¨æˆ·ç¼–å·(é»˜è®¤ä¸º1): ";
+                uid=io_manager::get_number(0,0,1);
+                
+                std::cout<<"å­˜æ¡£ç¼–å·(é»˜è®¤ä¸º13): ";
+                mode=io_manager::get_number(0,0,13);
+                
+                std::cout<<"èµ·å§‹æ——å¸œæ•°(å¥‡æ•°): ";
+                begin=io_manager::get_number();
+                if((begin&1)!=1)throw std::out_of_range("");
+                
+                std::cout<<"ç»ˆæ­¢æ——å¸œæ•°(å¶æ•°), ç›´æ¥è¾“å…¥å›è½¦åˆ™è®¡ç®—å½“å‰å…³: ";
+                end=io_manager::get_number(0,0,begin+1);
+                if((end&1)!=0)throw std::out_of_range("");
+
+                
+                std::cout<<"ç›®æ ‡åƒµå°¸: ";
+                target=io_manager::get_single_zombie();
+
+                std::cout<<"æœ€å¤§æ¬¡æ•°(é»˜è®¤å€¼ä¸º0): ";
+                limit=io_manager::get_number(0,0,0);
+
+                begin/=2;
+                end/=2;
+                
+            }catch(std::invalid_argument const& e){
+                std::cout<<"è¾“å…¥æ ¼å¼é”™è¯¯!"<<std::endl;
+                continue;
+            }catch(std::out_of_range const& e){
+                std::cout<<"è¾“å…¥æ ¼å¼é”™è¯¯!"<<std::endl;
+                continue;
             }
             
-
-            std::cout<<"ÓÃ»§±àºÅ(Ä¬ÈÏÎª1): ";
-            std::getline(std::cin,input);
-            if(input==""){
-                uid=1;
-            }else{
-                try{
-                    uid=std::stoul(input,0,10);
-                }catch(std::invalid_argument e){
-                    std::cout<<"ÓÃ»§±àºÅ¸ñÊ½´íÎó£¡"<<std::endl;
-                    continue;
-                }catch(std::out_of_range e){
-                    std::cout<<"ÓÃ»§±àºÅÊıÖµ·Ç·¨£¡"<<std::endl;
-                    continue;
-                }
-            }
-
-            std::cout<<"´æµµ±àºÅ(Ä¬ÈÏÎª13): ";
-            std::getline(std::cin,input);
-            if(input==""){
-                mode=13;
-            }else{
-                try{
-                    mode=std::stoul(input,0,10);
-                }catch(std::invalid_argument e){
-                    std::cout<<"´æµµ±àºÅ¸ñÊ½´íÎó£¡"<<std::endl;
-                    continue;
-                }catch(std::out_of_range e){
-                    std::cout<<"´æµµ±àºÅÊıÖµ·Ç·¨£¡"<<std::endl;
-                    continue;
-                }
-            }
-
-            std::cout<<"ÆğÊ¼ÆìÖÄÊı(ÆæÊı): ";
-            std::getline(std::cin,input);
-            try{
-                begin=std::stol(input,0,10);
-                if(begin<0||begin%2==0)throw std::out_of_range("");
-                begin/=2;
-            }catch(std::invalid_argument e){
-                std::cout<<"ÆğÊ¼ÆìÖÄÊı¸ñÊ½´íÎó£¡"<<std::endl;
-                continue;
-            }catch(std::out_of_range e){
-                std::cout<<"ÆğÊ¼ÆìÖÄÊıÊıÖµ·Ç·¨£¡"<<std::endl;
-                continue;
-            }
-
-            std::cout<<"ÖÕÖ¹ÆìÖÄÊı(Å¼Êı)£¬Ö±½ÓÊäÈë»Ø³µÔò¼ÆËãµ±Ç°¹Ø: ";
-            std::getline(std::cin,input);
-            try{
-                if(input==""){
-                    end=begin+1;
-                }else{
-                    end=std::stol(input,0,10);
-                    if(end<0||end%2==1)throw std::out_of_range("");
-                    end/=2;
-                    if(end<=begin)throw std::out_of_range("");
-                }
-            }catch(std::invalid_argument e){
-                std::cout<<"ÖÕÖ¹ÆìÖÄÊı¸ñÊ½´íÎó£¡"<<std::endl;
-                continue;
-            }catch(std::out_of_range e){
-                std::cout<<"ÖÕÖ¹ÆìÖÄÊıÊıÖµ·Ç·¨£¡"<<std::endl;
-                continue;
-            }
             wk.begin=begin;
             wk.end=end;
-
-            std::cout<<"Ä¿±ê½©Ê¬: ";
-            std::getline(std::cin,input);
-            try{
-                target=get_single_zombie(input);
-            }catch(std::invalid_argument e){
-                std::cout<<"Ä¿±ê½©Ê¬Êı¸ñÊ½´íÎó£¡"<<std::endl;
-                continue;
-            }
-
-            std::cout<<"×î´ó´ÎÊı(Ä¬ÈÏÖµÎª0): ";
-            std::getline(std::cin,input);
-            try{
-                if(input==""){
-                    limit=0;
-                }else{
-                    limit=std::stol(input,0,10);
-                    if(limit<0||begin+limit>end)throw std::out_of_range("");
-                }
-            }catch(std::invalid_argument e){
-                std::cout<<"×î´ó´ÎÊı¸ñÊ½´íÎó£¡"<<std::endl;
-                continue;
-            }catch(std::out_of_range e){
-                std::cout<<"×î´ó´ÎÊıÊıÖµ·Ç·¨£¡"<<std::endl;
-                continue;
-            }
-            wk.times=limit;
+            wk.limit=limit;
             wk.type=target;
             //std::cout<<"DEBUG:"<<limit<<" "<<target<<std::endl;
             wk.set(seed,uid,mode,scene,maxn,0);
-            wk.works(8);
-            std::cout<<"ÓÃÊ±:"<<std::setw(10)<<std::setiosflags(std::ios::fixed)<<std::setprecision(3)<<wk.times/1000.0<<"Ãë"<<std::endl;
+            wk.works(TRDS);
+            std::cout<<"ç”¨æ—¶:"<<std::setw(10)<<std::setiosflags(std::ios::fixed)<<std::setprecision(3)<<wk.times/1000.0<<"ç§’"<<std::endl;
             if(wk.found){
-                std::cout<<"³É¹¦ÕÒµ½ÖÖ×Ó£º"<<std::setw(8)<<std::hex<<wk.result<<std::dec<<std::endl;
+                std::cout<<"æˆåŠŸæ‰¾åˆ°ç§å­: "<<std::setw(8)<<std::hex<<wk.result<<std::dec<<std::endl;
             }else{
-                std::cout<<"Î´ÄÜÕÒµ½ÖÖ×Ó"<<std::endl;
+                std::cout<<"æœªèƒ½æ‰¾åˆ°ç§å­"<<std::endl;
+            }
+        }else if(mode=="4"){
+            uint32_t seed;
+            int mode,uid,scene,begin,end;
+            long long maxn;
+            long long target;
+            worker_weight wk;
+            try{
+                std::cout<<"èµ·å§‹ç§å­(åå…­è¿›åˆ¶,é»˜è®¤ä¸º0): ";
+                seed=io_manager::get_hex(0,1ll<<32,0);
+                
+                std::cout<<"æœ€å¤§èŒƒå›´(é»˜è®¤è®¡ç®—æ‰€æœ‰ç§å­): ";
+                maxn=io_manager::get_number(1,(1ll<<31)+1,1ll<<31);
+
+                std::cout<<"åœºæ™¯(é»˜è®¤ä¸ºæ³³æ± ): ";
+                scene=io_manager::get_scene(POOL);
+
+                std::cout<<"ç”¨æˆ·ç¼–å·(é»˜è®¤ä¸º1): ";
+                uid=io_manager::get_number(0,0,1);
+                
+                std::cout<<"å­˜æ¡£ç¼–å·(é»˜è®¤ä¸º13): ";
+                mode=io_manager::get_number(0,0,13);
+                
+                std::cout<<"èµ·å§‹æ——å¸œæ•°(å¥‡æ•°): ";
+                begin=io_manager::get_number();
+                if((begin&1)!=1)throw std::out_of_range("");
+                
+                std::cout<<"ç»ˆæ­¢æ——å¸œæ•°(å¶æ•°), ç›´æ¥è¾“å…¥å›è½¦åˆ™è®¡ç®—å½“å‰å…³: ";
+                end=io_manager::get_number(0,0,begin+1);
+                if((end&1)!=0)throw std::out_of_range("");
+
+                begin/=2;
+                end/=2;
+
+                for(int i=begin;i<end;i++){
+                    std::cout<<std::setw(4)<<i*2+1<<" -"<<std::setw(4)<<i*2+2<<" flag çš„ä¿¡æ¯"<<std::endl;
+                    std::cout<<"åƒµå°¸æƒé‡, è¾“å…¥\"P\"åˆ™ä¹‹åä½¿ç”¨ä¸Šä¸€å…³çš„è®¾ç½®: ";
+                    try{
+                        io_manager::get_kv(wk.weight[i]);
+                        for(int j=0;j<20;j++){
+                            std::cout<<wk.weight[i][j]<<",";
+                        }
+                        std::cout<<std::endl;
+                    }catch(io_manager::special_value const& s){
+                        if(s.value!=1)throw std::invalid_argument("");
+                        if(i==begin){
+                            throw std::invalid_argument("");
+                        }
+                        for(int j=i;j<end;j++){
+                            std::copy(wk.weight[i-1],wk.weight[i-1]+20,wk.weight[j]);
+                        }
+                        break;
+                    }
+                }
+                std::cout<<"ç›®æ ‡æƒé‡(é»˜è®¤ä¸º0): ";
+                target=io_manager::get_number(0,0,0);
+            }catch(std::invalid_argument const& e){
+                std::cout<<"è¾“å…¥æ ¼å¼é”™è¯¯!"<<std::endl;
+                continue;
+            }catch(std::out_of_range const& e){
+                std::cout<<"è¾“å…¥æ ¼å¼é”™è¯¯!"<<std::endl;
+                continue;
+            }
+            
+            wk.set(seed,uid,mode,scene,maxn,0);
+            wk.begin=begin;
+            wk.end=end;
+            wk.target=target;
+            wk.works(TRDS);
+            std::cout<<"ç”¨æ—¶:"<<std::setw(10)<<std::setprecision(3)<<wk.times/1000.0<<"ç§’"<<std::endl;
+
+            if(wk.best<=wk.target){
+                std::cout<<"æˆåŠŸæ‰¾åˆ°ç§å­: "<<std::setw(8)<<std::hex<<wk.result<<std::dec<<std::endl;
+                std::cout<<"æ€»æƒé‡"<<std::setw(8)<<wk.best<<std::dec<<std::endl;
+            }else{
+                std::cout<<"æœªèƒ½æ‰¾åˆ°ç§å­"<<std::endl;
+                std::cout<<"æœ€ä¼˜ç§å­: "<<std::setw(8)<<std::hex<<wk.result<<std::dec<<std::endl;
+                std::cout<<"æ€»æƒé‡"<<std::setw(8)<<wk.best<<std::dec<<std::endl;
+            }
+        }else if(mode=="5"){
+            
+            uint32_t seed;
+            int mode,uid,mode2,uid2;
+            try{
+                std::cout<<"åŸç§å­(åå…­è¿›åˆ¶): ";
+                seed=io_manager::get_hex(0,1ll<<32,-1);
+
+                std::cout<<"åŸç”¨æˆ·ç¼–å·(é»˜è®¤ä¸º1): ";
+                uid=io_manager::get_number(0,0,1);
+                
+                std::cout<<"åŸå­˜æ¡£ç¼–å·(é»˜è®¤ä¸º13): ";
+                mode=io_manager::get_number(0,0,13);
+
+                std::cout<<"æ–°ç”¨æˆ·ç¼–å·(é»˜è®¤ä¸º1): ";
+                uid2=io_manager::get_number(0,0,1);
+                
+                std::cout<<"æ–°å­˜æ¡£ç¼–å·(é»˜è®¤ä¸º13): ";
+                mode2=io_manager::get_number(0,0,13);
+            }catch(std::invalid_argument const& e){
+                std::cout<<"è¾“å…¥æ ¼å¼é”™è¯¯!"<<std::endl;
+                continue;
+            }catch(std::out_of_range const& e){
+                std::cout<<"è¾“å…¥æ ¼å¼é”™è¯¯!"<<std::endl;
+                continue;
+            }
+            uint32_t seed2;
+            seed2=seed+uid+mode-uid2-mode2;
+            std::cout<<"ç§å­: "<<std::setw(8)<<std::hex<<seed2<<std::dec<<std::endl;
+            if(seed2>=(1ll<<31)){
+                std::cout<<"è­¦å‘Š: ç§å­ä¸åœ¨æœ‰æ•ˆèŒƒå›´å†…"<<std::endl;
+            }
+                
+        }else if(mode=="s"){
+            std::cout<<"è¯·è¾“å…¥çº¿ç¨‹æ•°: ";
+            try{
+                int a;
+                a=io_manager::get_number(1,100,-1);
+                TRDS=a;
+                
+                std::cout<<"çº¿ç¨‹æ•°å·²è®¾ä¸º"<<a<<std::endl;
+            }catch(std::invalid_argument const& e){
+                std::cout<<"è¾“å…¥æ ¼å¼é”™è¯¯!"<<std::endl;
+                continue;
+            }catch(std::out_of_range const& e){
+                std::cout<<"è¾“å…¥æ ¼å¼é”™è¯¯!"<<std::endl;
+                continue;
             }
         }else if(mode==""){
             break;
         }else{
-            std::cout<<"Ä£Ê½±àºÅ´íÎó"<<std::endl;
+            std::cout<<"æ¨¡å¼ç¼–å·é”™è¯¯"<<std::endl;
         }
     }
 }
