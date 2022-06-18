@@ -1,5 +1,5 @@
-#pragma GCC optimize(3)
-#pragma GCC optimize("Ofast")
+//#pragma GCC optimize(3)
+//#pragma GCC optimize("Ofast")
 #include<iostream>
 #include<thread>
 #include<mutex>
@@ -554,7 +554,7 @@ class worker_base:public worker{
     uint32_t offset;
     int scene;
     
-    void init(){
+    virtual void init(){
         uint32_t seed,maxn,uid,mode;
 
         std::cout<<"起始种子(十六进制,默认为0): ";
@@ -574,7 +574,7 @@ class worker_base:public worker{
 
         set(seed,uid,mode,maxn,0);
     }
-    void disp(){
+    virtual void disp(){
         std::cout<<
             "用时:"<<
             std::setiosflags(std::ios::fixed)<<std::setw(10)<<std::setprecision(3)<<times/1000.0<<
@@ -650,10 +650,10 @@ class worker_satisfy :public worker_base{
     protected:
     uint32_t result;
     bool found=0;
-    void init(){
+    virtual void init(){
         worker_base::init();
     }
-    void disp(){
+    virtual void disp(){
         worker_base::disp();
         if(found){
             std::cout<<
@@ -823,10 +823,10 @@ class worker_minimum :public worker_base{
     protected:
     uint32_t result;
     long long best=(1ull<<63)-1;
-    void init(){
+    virtual void init(){
         worker_base::init();
     }
-    void disp(){
+    virtual void disp(){
         worker_base::disp();
         
         std::cout<<
@@ -946,7 +946,6 @@ class worker_single:public worker{
     void works(){
         uint32_t seed;
         int uid,mode,scene,begin,end;
-        d_page p1(scene);
         uint32_t l=(seed+uid+mode)*inv;
         try{
             std::cout<<"种子(十六进制): ";
@@ -975,6 +974,8 @@ class worker_single:public worker{
             std::cout<<"输入格式错误!"<<std::endl;
             return;
         }
+        
+        d_page p1(scene);
         for(int i=begin;i<end;i++){
             int t=p1.get(l+i,i);
             std::cout<<std::setw(4)<<i*2+1<<" - "<<std::setw(4)<<i*2+2<<" Flag: ";
