@@ -1,5 +1,5 @@
-//#pragma GCC optimize(3)
-//#pragma GCC optimize("Ofast")
+#pragma GCC optimize(3)
+#pragma GCC optimize("Ofast")
 #include<iostream>
 #include<thread>
 #include<mutex>
