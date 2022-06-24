@@ -97,9 +97,9 @@ class io_manager{
         long long r;
         try{
             r=std::stoll(s,0,base);
-        }catch(std::invalid_argument e){
+        }catch(const std::invalid_argument &e){
             throw io_exception(3);
-        }catch(std::out_of_range e){
+        }catch(const std::out_of_range &e){
             throw io_exception(4);
         }
         return r;
@@ -245,7 +245,6 @@ class io_manager{
             while(s.length()){
                 auto t0=s.length();
                 auto idx=visiable.begin();
-                bool sp=0;
                 for(auto i=++visiable.begin();i!=visiable.end();i++){
                     auto t=s.find(*i,0);
                     if(t!=std::string::npos && t<t0){
@@ -743,6 +742,7 @@ class worker_type :public worker_satisfy{
                 if(s.value!=2)throw s;
                 exc=~inc;
             }
+            std::cout<<std::hex<<inc<<" "<<exc<<std::dec<<std::endl;
             exc&=0xfffffffe;
             include[i]=inc;
             exclude[i]=exc;
@@ -845,7 +845,7 @@ class worker_minimum :public worker_base{
     void work(){
         d_page p(scene);
         long long r1=(1ull<<63)-1;
-        uint32_t r2;
+        uint32_t r2=0;
         while(1){
             mtx.lock();
             task t=get();
@@ -946,7 +946,6 @@ class worker_single:public worker{
     void works(){
         uint32_t seed;
         int uid,mode,scene,begin,end;
-        uint32_t l=(seed+uid+mode)*inv;
         try{
             std::cout<<"种子(十六进制): ";
             seed=io.get_hex(0,1ll<<32,-1);
@@ -976,6 +975,8 @@ class worker_single:public worker{
         }
         
         d_page p1(scene);
+        
+        uint32_t l=(seed+uid+mode)*inv;
         for(int i=begin;i<end;i++){
             int t=p1.get(l+i,i);
             std::cout<<std::setw(4)<<i*2+1<<" - "<<std::setw(4)<<i*2+2<<" Flag: ";
