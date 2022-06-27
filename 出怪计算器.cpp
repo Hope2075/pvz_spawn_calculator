@@ -354,6 +354,15 @@ class io_manager{
             std::cout<<std::endl;
         }
     }
+    std::string to_str_hex(uint32_t x){
+        std::string res="";
+        const char l[]="0123456789abcdef";
+        for(int i=0;i<8;i++){
+            res=l[x&0xf]+res;
+            x>>=4;
+        }
+        return res;
+    }
 };
 
 class d_page{
@@ -367,6 +376,8 @@ class d_page{
         int id;
         int scene;
         int data[BLOCK][8];
+
+
         const int allow_base[8]={
             0x0f0ffaff,0x0f0ff8ff,0x0f0fffff,0x0f0fffff,
             0x0f0fda7f,0x0f0fda7f,0x0f0ffaff,0x0f0ffaff
@@ -398,7 +409,7 @@ class d_page{
             tmp^=((tmp&0xFF3A58AD)<<7);
             tmp^=((tmp&0xFFFFDF8C)<<15);
             tmp^=(tmp>>18);
-            idx=(idx+1)%0x270;
+            idx=idx+1;
             return (tmp&0x7FFFFFFF)%max;
         }
         void rng_init(uint32_t seed){
@@ -527,6 +538,8 @@ class worker{
     static void help(){
         std::cout<<"该功能暂无帮助"<<std::endl;
     }
+    worker(){}
+    virtual ~worker(){}
     virtual void works()=0;
 
 };
@@ -609,7 +622,7 @@ class worker_base:public worker{
             length=rest;
         }
         rest-=length;
-        if(rest<=nxt_disp){
+        while(rest<=nxt_disp){
             putchar('.');
             nxt_disp-=block;
         }
@@ -655,10 +668,7 @@ class worker_satisfy :public worker_base{
     virtual void disp(){
         worker_base::disp();
         if(found){
-            std::cout<<
-                "成功找到种子: "<<
-                std::setw(8)<<std::hex<<result<<std::dec<<
-                std::endl;
+            std::cout<<"成功找到种子: "<<io.to_str_hex(result)<<std::endl;
         }else{
             std::cout<<"未能找到种子"<<std::endl;
         }
@@ -729,8 +739,8 @@ class worker_type :public worker_satisfy{
                     throw s;
                 }
                 for(int j=i;j<end;j++){
-                    include[j]=inc;
-                    exclude[j]=exc;
+                    include[j-begin]=inc;
+                    exclude[j-begin]=exc;
                 }
                 break;
             }
@@ -742,10 +752,10 @@ class worker_type :public worker_satisfy{
                 if(s.value!=2)throw s;
                 exc=~inc;
             }
-            std::cout<<std::hex<<inc<<" "<<exc<<std::dec<<std::endl;
+            //std::cout<<std::hex<<inc<<" "<<exc<<std::dec<<std::endl;
             exc&=0xfffffffe;
-            include[i]=inc;
-            exclude[i]=exc;
+            include[i-begin]=inc;
+            exclude[i-begin]=exc;
         }
     }
     void disp(){
@@ -755,8 +765,8 @@ class worker_type :public worker_satisfy{
         for(int i=begin;i<end;i++){
             int t;
             t=p.get(i_seed+i,i);
-            if(t&exclude[i])return 0;
-            if((t&include[i])!=include[i])return 0;
+            if(t&exclude[i-begin])return 0;
+            if((t&include[i-begin])!=include[i-begin])return 0;
         }
         return 1;
     }
@@ -829,14 +839,8 @@ class worker_minimum :public worker_base{
     virtual void disp(){
         worker_base::disp();
         
-        std::cout<<
-            "最优种子: "<<
-            std::setw(8)<<std::hex<<result<<std::dec<<
-            std::endl;
-        std::cout<<
-            "总权重"<<
-            std::setw(8)<<best<<std::dec<<
-            std::endl;
+        std::cout<<"最优种子: "<<io.to_str_hex(result)<<std::endl;
+        std::cout<<"总权重: "<<best<<std::endl;
     
     }
     virtual long long get_value(uint32_t,d_page&)=0;
@@ -875,6 +879,8 @@ class worker_weight :public worker_minimum{
     private:
     int begin,end;
     long long weight[1<<10][20];
+    long long t1[1<<10][1<<10];
+    long long t2[1<<10][1<<10];
     void init(){
         worker_minimum::init();
         std::cout<<"起始旗帜数(奇数): ";
@@ -892,16 +898,33 @@ class worker_weight :public worker_minimum{
             std::cout<<std::setw(4)<<i*2+1<<" -"<<std::setw(4)<<i*2+2<<" flag 的信息"<<std::endl;
             std::cout<<"僵尸权重, 输入\"P\"则之后使用上一关的设置: ";
             try{
-                io.get_kv(weight[i]);
+                io.get_kv(weight[i-begin]);
             }catch(io_manager::io_exception const& s){
                 if(s.value!=1)throw s;
                 if(i==begin){
                     throw s;
                 }
                 for(int j=i;j<end;j++){
-                    std::copy(weight[i-1],weight[i-1]+20,weight[j]);
+                    std::copy(weight[i-1-begin],weight[i-1-begin]+20,weight[j-begin]);
                 }
                 break;
+            }
+        }
+        
+        for(int i=begin;i<end;i++){
+            for(int j=0;j<(1<<10);j++){
+                t1[i-begin][j]=0;
+                for(int k=0;k<10;k++){
+                    if(j&(1<<k))t1[i-begin][j]+=weight[i-begin][k];
+                }
+            }
+        }
+        for(int i=begin;i<end;i++){
+            for(int j=0;j<(1<<10);j++){
+                t2[i-begin][j]=0;
+                for(int k=0;k<10;k++){
+                    if(j&(1<<k))t2[i-begin][j]+=weight[i-begin][k+10];
+                }
             }
         }
     }
@@ -913,9 +936,8 @@ class worker_weight :public worker_minimum{
         for(int i=begin;i<end;i++){
             int t;
             t=p.get(i_seed+i,i);
-            for(int j=0;j<20;j++){
-                if(t&(1<<j))value+=weight[i][j];
-            }
+            value+=t1[i-begin][t&0x3ff];
+            value+=t2[i-begin][t>>10];
         }
         return value;
     }
@@ -1017,7 +1039,7 @@ class worker_conv:public worker{
         }
         uint32_t seed2;
         seed2=seed+uid+mode-uid2-mode2;
-        std::cout<<"种子: "<<std::setw(8)<<std::hex<<seed2<<std::dec<<std::endl;
+        std::cout<<"种子: "<<io.to_str_hex(seed2)<<std::endl;
         if(seed2>=(1ll<<31)){
             std::cout<<"警告: 种子不在有效范围内"<<std::endl;
         }
@@ -1044,15 +1066,11 @@ int main(){
         std::getline(std::cin,mode);
         if(mode=="0"){
             io_manager io;
-            std::cout<<"0. 简介"<<std::endl;
-            std::cout<<"1. 根据种子计算出怪"<<std::endl;
-            std::cout<<"2. 按出怪求种子"<<std::endl;
-            std::cout<<"3. 按单个怪的最大次数求种子"<<std::endl;
-            std::cout<<"4. 按威胁值求种子"<<std::endl;
-            std::cout<<"5. 换算种子"<<std::endl;
+            std::cout<<"0  . 查看简介"<<std::endl;
+            std::cout<<"1-5. 查看对应功能的帮助"<<std::endl;
             
-            std::cout<<"n. 查看名称/简称/别名列表"<<std::endl;
-            std::cout<<"q. 返回主菜单"<<std::endl;
+            std::cout<<"n  . 查看名称/简称/别名列表"<<std::endl;
+            std::cout<<"q  . 返回主菜单"<<std::endl;
             
             std::cout<<"请选择页面:";
             std::getline(std::cin,mode);
@@ -1094,8 +1112,9 @@ int main(){
             worker_limit wk;
             wk.works();
         }else if(mode=="4"){
-            worker_weight wk;
-            wk.works();
+            worker_weight* wk=new worker_weight;
+            wk->works();
+            delete wk;
         }else if(mode=="5"){
             worker_conv wk;
             wk.works();
