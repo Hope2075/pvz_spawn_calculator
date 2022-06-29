@@ -8,7 +8,7 @@
 #include<algorithm>
 #include<iomanip>
 #include<vector>
-int TRDS=1;
+int TRDS=2;
 const long long inv=2083697005;
 //(int)(inv*101)=1
 enum scene{
