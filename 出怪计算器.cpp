@@ -461,13 +461,15 @@ class d_page{
                     if(d1[j]&(1<<GIGA))d1[j]=d1[j+1]^(1<<GIGA);
                 }
                 if(d1[2]&(1<<ZOMBONI)){
-                    if(d1[2]&(1<<GARG)){
+                    if(d1[3]&(1<<GARG)){
                         d1[2]=d1[4]^(1<<ZOMBONI)^(1<<GARG);
                     }else{
                         d1[2]=d1[3]^(1<<ZOMBONI);
                     }
-                }else{
-                    if(d1[2]&(1<<GARG)){
+                }else if(d1[2]&(1<<GARG)){
+                    if(d1[3]&(1<<ZOMBONI)){
+                        d1[2]=d1[4]^(1<<ZOMBONI)^(1<<GARG);
+                    }else{
                         d1[2]=d1[3]^(1<<GARG);
                     }
                 }
